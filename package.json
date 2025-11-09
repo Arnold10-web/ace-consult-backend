@@ -13,6 +13,7 @@
     "prisma:studio": "prisma studio",
     "create:admin": "ts-node scripts/createAdmin.ts",
     "create:default-admin": "ts-node scripts/createDefaultAdmin.ts",
+    "create:default-settings": "ts-node scripts/createDefaultSettings.ts",
     "seed:categories": "ts-node scripts/seedCategories.ts"
   },
   "keywords": [
