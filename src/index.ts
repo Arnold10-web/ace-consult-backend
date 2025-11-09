@@ -40,7 +40,7 @@ const UPLOAD_DIR = process.env.NODE_ENV === 'production'
 app.use('/uploads', express.static(UPLOAD_DIR));
 
 // Health check endpoint
-app.get('/health', (req: Request, res: Response) => {
+app.get('/health', (_req: Request, res: Response) => {
   res.json({ status: 'ok', message: 'Server is running' });
 });
 
@@ -55,12 +55,12 @@ app.use('/api/contact', contactRoutes);
 app.use('/api/categories', categoryRoutes);
 
 // 404 handler
-app.use((req: Request, res: Response) => {
+app.use((_req: Request, res: Response) => {
   res.status(404).json({ message: 'Route not found' });
 });
 
 // Error handler
-app.use((err: any, req: Request, res: Response, next: any) => {
+app.use((err: any, _req: Request, res: Response, _next: any) => {
   console.error(err.stack);
   res.status(500).json({ message: 'Something went wrong!' });
 });

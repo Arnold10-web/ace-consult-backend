@@ -1,7 +1,6 @@
 import { Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { optimizeImage, deleteImage } from '../utils/imageProcessor';
-import path from 'path';
 
 const prisma = new PrismaClient();
 

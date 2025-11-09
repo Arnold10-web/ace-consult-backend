@@ -4,7 +4,7 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 // PUBLIC: Get settings
-export const getSettings = async (req: Request, res: Response): Promise<void> => {
+export const getSettings = async (_req: Request, res: Response): Promise<void> => {
   try {
     // Get first settings record (there should only be one)
     const settings = await prisma.settings.findFirst();

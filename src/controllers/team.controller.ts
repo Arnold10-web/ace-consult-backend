@@ -5,7 +5,7 @@ import { optimizeImage, deleteImage } from '../utils/imageProcessor';
 const prisma = new PrismaClient();
 
 // PUBLIC: Get all team members
-export const getTeamMembers = async (req: Request, res: Response): Promise<void> => {
+export const getTeamMembers = async (_req: Request, res: Response): Promise<void> => {
   try {
     const teamMembers = await prisma.teamMember.findMany({
       orderBy: {
