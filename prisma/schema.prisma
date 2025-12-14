@@ -28,7 +28,7 @@ model Project {
   location          String
   city              String?
   country           String?
-  yearStart         Int
+  yearStart         Int?
   yearCompletion    Int?
   status            String     // "completed", "ongoing", "competition"
   client            String?
