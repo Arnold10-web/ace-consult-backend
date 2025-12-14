@@ -1,0 +1,149 @@
+// This is your Prisma schema file
+// Learn more: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Admin {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String   // bcrypt hashed
+  name      String
+  role      String   @default("admin")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Project {
+  id                String     @id @default(uuid())
+  title             String
+  slug              String     @unique
+  description       String     @db.Text
+  location          String
+  city              String?
+  country           String?
+  yearStart         Int
+  yearCompletion    Int?
+  status            String     // "completed", "ongoing", "competition"
+  client            String?
+  projectSize       String?
+  technicalSpecs    Json?
+  teamCredits       String[]
+  awards            String[]
+  isFeatured        Boolean    @default(false)
+  featuredImage     String?
+  images            String[]   // Array of image URLs
+  categories        Category[] @relation("ProjectCategories")
+  relatedProjects   Project[]  @relation("RelatedProjects")
+  relatedBy         Project[]  @relation("RelatedProjects")
+  publishedAt       DateTime?
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+
+  @@index([slug])
+  @@index([isFeatured])
+  @@index([publishedAt])
+  @@index([yearStart])
+  @@index([status])
+}
+
+model Category {
+  id        String    @id @default(uuid())
+  name      String    @unique
+  slug      String    @unique
+  projects  Project[] @relation("ProjectCategories")
+  createdAt DateTime  @default(now())
+
+  @@index([slug])
+}
+
+model Article {
+  id             String      @id @default(uuid())
+  title          String
+  slug           String      @unique
+  excerpt        String?
+  content        String      @db.Text
+  featuredImage  String?
+  author         TeamMember? @relation(fields: [authorId], references: [id])
+  authorId       String?
+  tags           String[]
+  seoTitle       String?
+  seoDescription String?
+  isFeatured     Boolean     @default(false)
+  publishedAt    DateTime?
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  @@index([slug])
+  @@index([publishedAt])
+  @@index([authorId])
+  @@index([isFeatured])
+}
+
+model TeamMember {
+  id         String    @id @default(uuid())
+  name       String
+  title      String
+  department String?
+  bio        String?   @db.Text
+  photo      String?
+  email      String?
+  linkedin   String?
+  order      Int       @default(0)
+  articles   Article[]
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  @@index([order])
+}
+
+model Media {
+  id        String   @id @default(uuid())
+  filename  String
+  filepath  String
+  mimetype  String
+  size      Int
+  alt       String?
+  caption   String?
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}
+
+model Settings {
+  id              String   @id @default(uuid())
+  companyName     String
+  tagline         String?
+  description     String?  @db.Text
+  contactEmail    String
+  phone           String?
+  address         String?
+  socialLinks     Json?    // {facebook, twitter, instagram, linkedin}
+  heroImages      String[] // URLs for homepage hero
+  heroTitle       String?
+  heroSubtitle    String?
+  seoDefaultTitle String?
+  seoDefaultDesc  String?
+  updatedAt       DateTime @updatedAt
+}
+
+model ContactSubmission {
+  id          String   @id @default(uuid())
+  name        String
+  email       String
+  phone       String?
+  company     String?
+  projectType String?
+  message     String   @db.Text
+  isRead      Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([isRead])
+}
