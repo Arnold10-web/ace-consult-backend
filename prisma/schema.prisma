@@ -28,8 +28,8 @@ model Project {
   location          String
   city              String?
   country           String?
-  yearStart         Int?
-  yearCompletion    Int?
+  startDate         DateTime?
+  completionDate    DateTime?
   status            String     // "draft", "published"
   client            String?
   projectSize       String?

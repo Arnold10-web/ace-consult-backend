@@ -46,7 +46,11 @@ export const getProjects = async (req: Request, res: Response): Promise<void> =>
     }
 
     if (year) {
-      where.yearStart = parseInt(year as string);
+      const yearInt = parseInt(year as string);
+      where.startDate = {
+        gte: new Date(`${yearInt}-01-01`),
+        lt: new Date(`${yearInt + 1}-01-01`),
+      };
     }
 
     if (featured === 'true') {
@@ -170,8 +174,8 @@ export const createProject = async (req: Request, res: Response): Promise<void> 
       location,
       city,
       country,
-      yearStart,
-      yearCompletion,
+      startDate,
+      completionDate,
       status,
       client,
       projectSize,
@@ -227,8 +231,8 @@ export const createProject = async (req: Request, res: Response): Promise<void> 
         location,
         city: city || null,
         country: country || null,
-        yearStart: yearStart ? parseInt(yearStart) : null,
-        yearCompletion: yearCompletion ? parseInt(yearCompletion) : null,
+        startDate: startDate ? new Date(startDate) : null,
+        completionDate: completionDate ? new Date(completionDate) : null,
         status,
         client: client || null,
         projectSize: projectSize || null,
@@ -335,8 +339,8 @@ export const updateProject = async (req: Request, res: Response): Promise<void> 
       location,
       city: city || null,
       country: country || null,
-      yearStart: yearStart ? parseInt(yearStart) : undefined,
-      yearCompletion: yearCompletion ? parseInt(yearCompletion) : null,
+      startDate: startDate ? new Date(startDate) : undefined,
+      completionDate: completionDate ? new Date(completionDate) : null,
       status,
       client: client || null,
       projectSize: projectSize || null,
