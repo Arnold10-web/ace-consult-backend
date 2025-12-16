@@ -1,4 +1,3 @@
-import sharp from 'sharp';
 import path from 'path';
 import fs from 'fs/promises';
 
@@ -9,56 +8,43 @@ export interface OptimizedImages {
 
 export const optimizeImage = async (filepath: string): Promise<OptimizedImages> => {
   try {
-    const ext = path.extname(filepath);
-    const originalPath = filepath.replace(ext, '.webp');
-    const thumbPath = filepath.replace(ext, '-thumb.webp');
-
-    // Optimize full-size image
-    await sharp(filepath)
-      .resize(1920, 1080, {
-        fit: 'inside',
-        withoutEnlargement: true,
-      })
-      .webp({ quality: 85 })
-      .toFile(originalPath);
-
-    // Generate thumbnail
-    await sharp(filepath)
-      .resize(400, 300, {
-        fit: 'cover',
-      })
-      .webp({ quality: 80 })
-      .toFile(thumbPath);
-
-    // Delete original file if it's not already .webp
-    if (ext !== '.webp') {
-      await fs.unlink(filepath);
-    }
-
+    console.log('Processing image:', filepath);
+    
+    // Convert absolute path to relative URL for web serving
+    // Remove the upload directory prefix to get just the filename
+    const filename = path.basename(filepath);
+    const webPath = `/uploads/${filename}`;
+    
+    console.log('Image web path:', webPath);
+    
     return {
-      original: originalPath,
-      thumbnail: thumbPath,
+      original: webPath,
+      thumbnail: webPath, // Use same image for now to speed up
     };
   } catch (error) {
-    console.error('Error optimizing image:', error);
-    throw new Error('Failed to optimize image');
+    console.error('Error processing image:', error);
+    throw new Error('Failed to process image');
   }
 };
 
 export const deleteImage = async (filepath: string): Promise<void> => {
   try {
-    await fs.unlink(filepath);
+    console.log('Deleting image:', filepath);
     
-    // Try to delete thumbnail
-    const ext = path.extname(filepath);
-    const thumbPath = filepath.replace(ext, '-thumb.webp');
-    try {
-      await fs.unlink(thumbPath);
-    } catch {
-      // Thumbnail might not exist, ignore error
+    // Handle both full paths and relative URLs
+    let actualPath = filepath;
+    if (filepath.startsWith('/uploads/')) {
+      // Convert web URL back to actual file path
+      const uploadDir = process.env.NODE_ENV === 'production' 
+        ? (process.env.UPLOAD_DIR || '/app/uploads')
+        : path.join(__dirname, '../../uploads');
+      actualPath = path.join(uploadDir, path.basename(filepath));
     }
+    
+    await fs.unlink(actualPath);
+    console.log('Image deleted successfully:', actualPath);
   } catch (error) {
     console.error('Error deleting image:', error);
-    throw new Error('Failed to delete image');
+    // Don't throw error to prevent blocking other operations
   }
 };

@@ -66,7 +66,12 @@ console.log(`Upload directory: ${UPLOAD_DIR}`);
 console.log(`Environment: ${process.env.NODE_ENV}`);
 console.log(`UPLOAD_DIR env var: ${process.env.UPLOAD_DIR}`);
 
-app.use('/uploads', express.static(UPLOAD_DIR));
+// Static file serving with CORS headers
+app.use('/uploads', (_req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+  next();
+}, express.static(UPLOAD_DIR));
 
 // Health check endpoint
 app.get('/health', (_req: Request, res: Response) => {
