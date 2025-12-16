@@ -35,18 +35,19 @@ app.use(express.urlencoded({ extended: true }));
 // Serve static files (uploads)
 // Use Railway volume path in production, local uploads in development
 let UPLOAD_DIR = process.env.NODE_ENV === 'production' 
-  ? '/app/uploads'
+  ? (process.env.UPLOAD_DIR || '/app/uploads')
   : path.join(__dirname, '../uploads');
 
 // Fallback: try to find the mounted volume directory in production
 if (process.env.NODE_ENV === 'production') {
   const fs = require('fs');
   const possiblePaths = [
+    process.env.UPLOAD_DIR,
     '/app/uploads',
     '/uploads',
     '/mnt/uploads',
     '/app/ace-consult-backend-volume'
-  ];
+  ].filter(Boolean);
   
   for (const testPath of possiblePaths) {
     try {
@@ -63,6 +64,7 @@ if (process.env.NODE_ENV === 'production') {
 
 console.log(`Upload directory: ${UPLOAD_DIR}`);
 console.log(`Environment: ${process.env.NODE_ENV}`);
+console.log(`UPLOAD_DIR env var: ${process.env.UPLOAD_DIR}`);
 
 app.use('/uploads', express.static(UPLOAD_DIR));
 
