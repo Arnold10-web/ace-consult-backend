@@ -49,7 +49,7 @@ model Project {
   @@index([slug])
   @@index([isFeatured])
   @@index([publishedAt])
-  @@index([yearStart])
+  @@index([startDate])
   @@index([status])
 }
 
