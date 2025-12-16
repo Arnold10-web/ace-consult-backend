@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
+import { deleteImage } from '../utils/imageProcessor';
 
 const prisma = new PrismaClient();
 
@@ -280,6 +281,26 @@ export const deleteArticle = async (req: Request, res: Response): Promise<void> 
   try {
     const { id } = req.params;
 
+    // Get article to find associated images
+    const article = await prisma.article.findUnique({
+      where: { id },
+    });
+
+    if (!article) {
+      res.status(404).json({ message: 'Article not found' });
+      return;
+    }
+
+    // Delete associated images if they exist
+    if (article.featuredImage) {
+      try {
+        await deleteImage(article.featuredImage);
+      } catch (error) {
+        console.error('Error deleting featured image:', error);
+      }
+    }
+
+    // Delete article from database
     await prisma.article.delete({
       where: { id },
     });

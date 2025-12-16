@@ -129,6 +129,92 @@ export const getProjectBySlug = async (req: Request, res: Response): Promise<voi
   }
 };
 
+// ADMIN: Get project by ID (for editing)
+export const getProjectById = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+
+    const project = await prisma.project.findUnique({
+      where: { id },
+      include: {
+        categories: true,
+      },
+    });
+
+    if (!project) {
+      res.status(404).json({ message: 'Project not found' });
+      return;
+    }
+
+    res.json({
+      data: project,
+      message: 'Project retrieved successfully',
+    });
+  } catch (error) {
+    console.error('Error fetching project by ID:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
+// ADMIN: Delete individual image from project
+export const deleteProjectImage = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const { imageUrl } = req.body;
+
+    if (!imageUrl) {
+      res.status(400).json({ message: 'Image URL is required' });
+      return;
+    }
+
+    const project = await prisma.project.findUnique({
+      where: { id },
+    });
+
+    if (!project) {
+      res.status(404).json({ message: 'Project not found' });
+      return;
+    }
+
+    // Check if image exists in project
+    if (!project.images.includes(imageUrl)) {
+      res.status(404).json({ message: 'Image not found in project' });
+      return;
+    }
+
+    // Remove image from project images array
+    const updatedImages = project.images.filter(img => img !== imageUrl);
+
+    // Update project
+    const updatedProject = await prisma.project.update({
+      where: { id },
+      data: {
+        images: updatedImages,
+        featuredImage: updatedImages[0] || null, // Update featured image if deleted
+      },
+      include: {
+        categories: true,
+      },
+    });
+
+    // Delete image file from storage
+    try {
+      await deleteImage(imageUrl);
+    } catch (error) {
+      console.error('Error deleting image file:', error);
+      // Continue even if file deletion fails
+    }
+
+    res.json({
+      data: updatedProject,
+      message: 'Image deleted successfully',
+    });
+  } catch (error) {
+    console.error('Error deleting project image:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
 // ADMIN: Get all projects (including drafts)
 export const getAdminProjects = async (req: Request, res: Response): Promise<void> => {
   try {
