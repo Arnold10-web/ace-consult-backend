@@ -30,7 +30,7 @@ model Project {
   country           String?
   yearStart         Int?
   yearCompletion    Int?
-  status            String     // "completed", "ongoing", "competition"
+  status            String     // "draft", "published"
   client            String?
   projectSize       String?
   technicalSpecs    Json?

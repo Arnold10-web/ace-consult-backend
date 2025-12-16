@@ -238,7 +238,7 @@ export const createProject = async (req: Request, res: Response): Promise<void> 
         isFeatured: isFeatured === 'true' || isFeatured === true,
         images: imageUrls,
         featuredImage: imageUrls[0] || null,
-        publishedAt: publishedAt ? new Date(publishedAt) : (status === 'completed' ? new Date() : null),
+        publishedAt: status === 'published' ? (publishedAt ? new Date(publishedAt) : new Date()) : null,
         categories: categoryIds ? {
           connect: JSON.parse(categoryIds).map((id: string) => ({ id })),
         } : undefined,
@@ -346,7 +346,7 @@ export const updateProject = async (req: Request, res: Response): Promise<void> 
       isFeatured: isFeatured === 'true' || isFeatured === true,
       images: allImages,
       featuredImage: allImages[0] || null,
-      publishedAt: publishedAt ? new Date(publishedAt) : null,
+      publishedAt: status === 'published' ? (publishedAt ? new Date(publishedAt) : new Date()) : null,
     };
 
     // Handle categories
