@@ -5,7 +5,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 // Use Railway volume path in production, local uploads in development
 const UPLOAD_DIR = process.env.NODE_ENV === 'production' 
-  ? '/app/uploads' 
+  ? process.env.RAILWAY_VOLUME_MOUNT_PATH || '/app/uploads'
   : path.join(__dirname, '../../uploads');
 
 // Ensure upload directory exists

@@ -35,8 +35,13 @@ app.use(express.urlencoded({ extended: true }));
 // Serve static files (uploads)
 // Use Railway volume path in production, local uploads in development
 const UPLOAD_DIR = process.env.NODE_ENV === 'production' 
-  ? '/app/uploads' 
+  ? process.env.RAILWAY_VOLUME_MOUNT_PATH || '/app/uploads'
   : path.join(__dirname, '../uploads');
+
+console.log(`Upload directory: ${UPLOAD_DIR}`);
+console.log(`Environment: ${process.env.NODE_ENV}`);
+console.log(`Railway volume mount: ${process.env.RAILWAY_VOLUME_MOUNT_PATH}`);
+
 app.use('/uploads', express.static(UPLOAD_DIR));
 
 // Health check endpoint
