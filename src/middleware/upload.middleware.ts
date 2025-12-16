@@ -16,7 +16,7 @@ if (process.env.NODE_ENV === 'production') {
     '/uploads',
     '/mnt/uploads',
     '/app/ace-consult-backend-volume'
-  ].filter(Boolean);
+  ].filter((path): path is string => Boolean(path));
   
   for (const testPath of possiblePaths) {
     try {
