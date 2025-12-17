@@ -132,6 +132,35 @@ export const getAdminArticles = async (req: Request, res: Response): Promise<voi
   }
 };
 
+// ADMIN: Get article by ID
+export const getArticleById = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+
+    const article = await prisma.article.findUnique({
+      where: {
+        id: id,
+      },
+      include: {
+        author: true,
+      },
+    });
+
+    if (!article) {
+      res.status(404).json({ message: 'Article not found' });
+      return;
+    }
+
+    res.json({
+      data: article,
+      message: 'Article retrieved successfully',
+    });
+  } catch (error) {
+    console.error('Error fetching article:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
 // ADMIN: Create article
 export const createArticle = async (req: Request, res: Response): Promise<void> => {
   try {
