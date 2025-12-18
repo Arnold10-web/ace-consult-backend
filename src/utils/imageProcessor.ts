@@ -10,8 +10,7 @@ export const optimizeImage = async (filepath: string): Promise<OptimizedImages> 
   try {
     console.log('Processing image:', filepath);
     
-    // Convert absolute path to relative URL for web serving
-    // Remove the upload directory prefix to get just the filename
+    // Generate relative web path directly from filename
     const filename = path.basename(filepath);
     const webPath = `/uploads/${filename}`;
     
@@ -19,7 +18,7 @@ export const optimizeImage = async (filepath: string): Promise<OptimizedImages> 
     
     return {
       original: webPath,
-      thumbnail: webPath, // Use same image for now to speed up
+      thumbnail: webPath, // Use same image for speed
     };
   } catch (error) {
     console.error('Error processing image:', error);
