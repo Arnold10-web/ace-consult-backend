@@ -14,8 +14,8 @@ const router = Router();
 router.get('/', getTeamMembers);
 
 // Admin routes (protected)
-router.post('/admin', authMiddleware, upload.single('photo'), createTeamMember);
-router.put('/admin/:id', authMiddleware, upload.single('photo'), updateTeamMember);
+router.post('/admin', authMiddleware, upload.single('image'), createTeamMember);
+router.put('/admin/:id', authMiddleware, upload.single('image'), updateTeamMember);
 router.delete('/admin/:id', authMiddleware, deleteTeamMember);
 
 export default router;
