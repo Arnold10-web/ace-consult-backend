@@ -8,7 +8,7 @@ let UPLOAD_DIR = process.env.NODE_ENV === 'production'
   ? (process.env.UPLOAD_DIR || '/app/uploads')
   : path.join(__dirname, '../../uploads');
 
-// Fallback: try to find the mounted volume directory in production
+// Only try to find mounted volume in production
 if (process.env.NODE_ENV === 'production') {
   const possiblePaths = [
     process.env.UPLOAD_DIR,
@@ -29,11 +29,26 @@ if (process.env.NODE_ENV === 'production') {
       // Continue checking
     }
   }
+} else {
+  // For development, ensure we use local path
+  UPLOAD_DIR = path.join(__dirname, '../../uploads');
 }
+
+console.log(`Upload directory: ${UPLOAD_DIR}`);
 
 // Ensure upload directory exists
 if (!fs.existsSync(UPLOAD_DIR)) {
-  fs.mkdirSync(UPLOAD_DIR, { recursive: true });
+  try {
+    fs.mkdirSync(UPLOAD_DIR, { recursive: true });
+    console.log(`Created upload directory: ${UPLOAD_DIR}`);
+  } catch (error) {
+    console.error(`Failed to create upload directory: ${UPLOAD_DIR}`, error);
+    // Fallback to temp directory
+    UPLOAD_DIR = '/tmp/uploads';
+    if (!fs.existsSync(UPLOAD_DIR)) {
+      fs.mkdirSync(UPLOAD_DIR, { recursive: true });
+    }
+  }
 }
 
 // Configure storage

@@ -30,3 +30,6 @@ export const authMiddleware = (
     res.status(401).json({ message: 'Invalid or expired token' });
   }
 };
+
+// Alias for compatibility
+export const authenticateToken = authMiddleware;
