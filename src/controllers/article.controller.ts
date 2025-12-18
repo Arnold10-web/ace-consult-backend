@@ -222,7 +222,7 @@ export const createArticle = async (req: Request, res: Response): Promise<void> 
         excerpt: excerpt || null,
         content,
         featuredImage: featuredImagePath,
-        authorId: finalAuthorId,
+        authorId: authorId || null,
         tags: tagsArray,
         seoTitle: seoTitle || null,
         seoDescription: seoDescription || null,
