@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
-import { deleteImage } from '../utils/imageProcessor';
+import { deleteImage, optimizeImage } from '../utils/imageProcessor';
 
 const prisma = new PrismaClient();
 
@@ -168,7 +168,6 @@ export const createArticle = async (req: Request, res: Response): Promise<void> 
       title,
       excerpt,
       content,
-      featuredImage,
       authorId,
       tags,
       seoTitle,
@@ -181,6 +180,13 @@ export const createArticle = async (req: Request, res: Response): Promise<void> 
     if (!title || !content) {
       res.status(400).json({ message: 'Title and content are required' });
       return;
+    }
+
+    // Handle featured image upload
+    let featuredImagePath = null;
+    if (req.file) {
+      const optimized = await optimizeImage(req.file.path);
+      featuredImagePath = optimized.original;
     }
 
     // Generate slug
@@ -215,7 +221,7 @@ export const createArticle = async (req: Request, res: Response): Promise<void> 
         slug,
         excerpt: excerpt || null,
         content,
-        featuredImage: featuredImage || null,
+        featuredImage: featuredImagePath,
         authorId: authorId || null,
         tags: tagsArray,
         seoTitle: seoTitle || null,
