@@ -1,5 +1,7 @@
 import { Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
+import bcrypt from 'bcrypt';
+import { optimizeImage, deleteImage } from '../utils/imageProcessor';
 
 const prisma = new PrismaClient();
 
@@ -45,6 +47,17 @@ export const updateSettings = async (req: Request, res: Response): Promise<void>
     // Get first settings record or create if doesn't exist
     let settings = await prisma.settings.findFirst();
 
+    // Handle logo upload
+    let logoPath = settings?.logo || null;
+    if (req.file) {
+      // Delete old logo if exists
+      if (settings?.logo) {
+        await deleteImage(settings.logo);
+      }
+      const optimized = await optimizeImage(req.file.path);
+      logoPath = optimized.original;
+    }
+
     if (!settings) {
       // Create new settings
       settings = await prisma.settings.create({
@@ -61,6 +74,7 @@ export const updateSettings = async (req: Request, res: Response): Promise<void>
           heroSubtitle: heroSubtitle || null,
           seoDefaultTitle: seoDefaultTitle || null,
           seoDefaultDesc: seoDefaultDesc || null,
+          logo: logoPath,
         },
       });
     } else {
@@ -80,6 +94,7 @@ export const updateSettings = async (req: Request, res: Response): Promise<void>
           heroSubtitle: heroSubtitle || null,
           seoDefaultTitle: seoDefaultTitle || null,
           seoDefaultDesc: seoDefaultDesc || null,
+          logo: logoPath,
         },
       });
     }
@@ -90,6 +105,55 @@ export const updateSettings = async (req: Request, res: Response): Promise<void>
     });
   } catch (error) {
     console.error('Error updating settings:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
+// ADMIN: Change admin password
+export const changePassword = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    const userId = (req as any).user?.id;
+
+    if (!currentPassword || !newPassword) {
+      res.status(400).json({ message: 'Current password and new password are required' });
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      res.status(400).json({ message: 'New password must be at least 6 characters long' });
+      return;
+    }
+
+    // Get the user
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      res.status(404).json({ message: 'User not found' });
+      return;
+    }
+
+    // Verify current password
+    const isCurrentPasswordValid = await bcrypt.compare(currentPassword, user.password);
+    if (!isCurrentPasswordValid) {
+      res.status(400).json({ message: 'Current password is incorrect' });
+      return;
+    }
+
+    // Hash new password
+    const hashedNewPassword = await bcrypt.hash(newPassword, 10);
+
+    // Update password
+    await prisma.user.update({
+      where: { id: userId },
+      data: { password: hashedNewPassword },
+    });
+
+    res.json({ message: 'Password changed successfully' });
+  } catch (error) {
+    console.error('Error changing password:', error);
     res.status(500).json({ message: 'Internal server error' });
   }
 };

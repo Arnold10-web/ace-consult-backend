@@ -10,6 +10,7 @@ import mediaRoutes from './routes/media.routes';
 import settingsRoutes from './routes/settings.routes';
 import contactRoutes from './routes/contact.routes';
 import categoryRoutes from './routes/category.routes';
+import serviceRoutes from './routes/service.routes';
 
 // Load environment variables
 dotenv.config();
@@ -87,6 +88,7 @@ app.use('/api/media', mediaRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/contact', contactRoutes);
 app.use('/api/categories', categoryRoutes);
+app.use('/api/services', serviceRoutes);
 
 // 404 handler
 app.use((_req: Request, res: Response) => {
