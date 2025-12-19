@@ -49,13 +49,50 @@ export const updateSettings = async (req: Request, res: Response): Promise<void>
 
     // Handle logo upload
     let logoPath = settings?.logo || null;
-    if (req.file) {
-      // Delete old logo if exists
-      if (settings?.logo) {
-        await deleteImage(settings.logo);
+    let heroImagePaths = settings?.heroImages || [];
+
+    if (req.files) {
+      const files = req.files as { [fieldname: string]: Express.Multer.File[] };
+      
+      // Handle logo upload
+      if (files.logo && files.logo[0]) {
+        // Delete old logo if exists
+        if (settings?.logo) {
+          await deleteImage(settings.logo);
+        }
+        const optimized = await optimizeImage(files.logo[0].path);
+        logoPath = optimized.original;
       }
-      const optimized = await optimizeImage(req.file.path);
-      logoPath = optimized.original;
+      
+      // Handle hero images upload
+      if (files.heroImages && files.heroImages.length > 0) {
+        // Delete old hero images
+        if (settings?.heroImages && Array.isArray(settings.heroImages)) {
+          for (const oldImage of settings.heroImages) {
+            await deleteImage(oldImage);
+          }
+        }
+        
+        // Process new hero images
+        const newHeroImages = [];
+        for (const file of files.heroImages) {
+          const optimized = await optimizeImage(file.path);
+          newHeroImages.push(optimized.original);
+        }
+        heroImagePaths = newHeroImages;
+      }
+    }
+
+    // Handle hero images from JSON (if sent as string)
+    if (heroImages && typeof heroImages === 'string') {
+      try {
+        const parsedImages = JSON.parse(heroImages);
+        if (Array.isArray(parsedImages)) {
+          heroImagePaths = parsedImages;
+        }
+      } catch {
+        // Keep existing heroImagePaths
+      }
     }
 
     if (!settings) {
@@ -69,7 +106,7 @@ export const updateSettings = async (req: Request, res: Response): Promise<void>
           phone: phone || null,
           address: address || null,
           socialLinks: socialLinks || null,
-          heroImages: heroImages || [],
+          heroImages: heroImagePaths,
           heroTitle: heroTitle || null,
           heroSubtitle: heroSubtitle || null,
           seoDefaultTitle: seoDefaultTitle || null,
@@ -89,7 +126,7 @@ export const updateSettings = async (req: Request, res: Response): Promise<void>
           phone: phone || null,
           address: address || null,
           socialLinks: socialLinks || null,
-          heroImages: heroImages || [],
+          heroImages: heroImagePaths,
           heroTitle: heroTitle || null,
           heroSubtitle: heroSubtitle || null,
           seoDefaultTitle: seoDefaultTitle || null,
@@ -125,18 +162,18 @@ export const changePassword = async (req: Request, res: Response): Promise<void>
       return;
     }
 
-    // Get the user
-    const user = await prisma.user.findUnique({
+    // Get the admin user
+    const admin = await prisma.admin.findUnique({
       where: { id: userId },
     });
 
-    if (!user) {
-      res.status(404).json({ message: 'User not found' });
+    if (!admin) {
+      res.status(404).json({ message: 'Admin user not found' });
       return;
     }
 
     // Verify current password
-    const isCurrentPasswordValid = await bcrypt.compare(currentPassword, user.password);
+    const isCurrentPasswordValid = await bcrypt.compare(currentPassword, admin.password);
     if (!isCurrentPasswordValid) {
       res.status(400).json({ message: 'Current password is incorrect' });
       return;
@@ -146,7 +183,7 @@ export const changePassword = async (req: Request, res: Response): Promise<void>
     const hashedNewPassword = await bcrypt.hash(newPassword, 10);
 
     // Update password
-    await prisma.user.update({
+    await prisma.admin.update({
       where: { id: userId },
       data: { password: hashedNewPassword },
     });

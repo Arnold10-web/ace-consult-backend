@@ -9,7 +9,10 @@ const router = Router();
 router.get('/', getSettings);
 
 // Admin routes (protected)
-router.put('/admin', authenticateToken, upload.single('logo'), updateSettings);
+router.put('/admin', authenticateToken, upload.fields([
+  { name: 'logo', maxCount: 1 },
+  { name: 'heroImages', maxCount: 5 }
+]), updateSettings);
 router.post('/change-password', authenticateToken, changePassword);
 
 export default router;

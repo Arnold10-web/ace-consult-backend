@@ -5,7 +5,7 @@ import { optimizeImage, deleteImage } from '../utils/imageProcessor';
 const prisma = new PrismaClient();
 
 // PUBLIC: Get all active services
-export const getServices = async (req: Request, res: Response): Promise<void> => {
+export const getServices = async (_req: Request, res: Response): Promise<void> => {
   try {
     const services = await prisma.service.findMany({
       where: { isActive: true },
@@ -23,7 +23,7 @@ export const getServices = async (req: Request, res: Response): Promise<void> =>
 };
 
 // ADMIN: Get all services
-export const getAdminServices = async (req: Request, res: Response): Promise<void> => {
+export const getAdminServices = async (_req: Request, res: Response): Promise<void> => {
   try {
     const services = await prisma.service.findMany({
       orderBy: { order: 'asc' },
