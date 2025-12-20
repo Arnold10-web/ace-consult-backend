@@ -2,6 +2,14 @@ import express, { Request, Response } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import path from 'path';
+import {
+  compressionMiddleware,
+  securityMiddleware,
+  rateLimitMiddleware,
+  apiRateLimitMiddleware,
+  cacheMiddleware,
+  performanceMiddleware
+} from './middleware/performance.middleware';
 import authRoutes from './routes/auth.routes';
 import projectRoutes from './routes/project.routes';
 import articleRoutes from './routes/article.routes';
@@ -11,6 +19,7 @@ import settingsRoutes from './routes/settings.routes';
 import contactRoutes from './routes/contact.routes';
 import categoryRoutes from './routes/category.routes';
 import serviceRoutes from './routes/service.routes';
+import analyticsRoutes from './routes/analytics.routes';
 
 // Load environment variables
 dotenv.config();
@@ -19,7 +28,13 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
 
-// Middleware
+// Performance and Security Middleware
+app.use(compressionMiddleware);
+app.use(securityMiddleware);
+app.use(performanceMiddleware);
+app.use(rateLimitMiddleware);
+
+// Basic Middleware
 app.use(cors({
   origin: [
     'http://localhost:3000',
@@ -79,16 +94,18 @@ app.get('/health', (_req: Request, res: Response) => {
   res.json({ status: 'ok', message: 'Server is running' });
 });
 
-// API Routes
+// API Routes with rate limiting
+app.use('/api', apiRateLimitMiddleware);
 app.use('/api/auth', authRoutes);
-app.use('/api/projects', projectRoutes);
-app.use('/api/articles', articleRoutes);
-app.use('/api/team', teamRoutes);
+app.use('/api/projects', cacheMiddleware(300), projectRoutes); // 5 min cache
+app.use('/api/articles', cacheMiddleware(300), articleRoutes); // 5 min cache
+app.use('/api/team', cacheMiddleware(600), teamRoutes); // 10 min cache
 app.use('/api/media', mediaRoutes);
-app.use('/api/settings', settingsRoutes);
+app.use('/api/settings', cacheMiddleware(3600), settingsRoutes); // 1 hour cache
 app.use('/api/contact', contactRoutes);
-app.use('/api/categories', categoryRoutes);
-app.use('/api/services', serviceRoutes);
+app.use('/api/categories', cacheMiddleware(1800), categoryRoutes); // 30 min cache
+app.use('/api/services', cacheMiddleware(600), serviceRoutes); // 10 min cache
+app.use('/api/analytics', analyticsRoutes);
 
 // 404 handler
 app.use((_req: Request, res: Response) => {

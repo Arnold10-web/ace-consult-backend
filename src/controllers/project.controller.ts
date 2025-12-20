@@ -26,7 +26,7 @@ export const getProjects = async (req: Request, res: Response): Promise<void> =>
     } = req.query;
 
     const skip = (parseInt(page as string) - 1) * parseInt(limit as string);
-    const take = parseInt(limit as string);
+    const take = Math.min(parseInt(limit as string), 50); // Max 50 items per page
 
     // Build filter
     const where: any = {
@@ -65,16 +65,32 @@ export const getProjects = async (req: Request, res: Response): Promise<void> =>
       ];
     }
 
-    // Get projects
+    // Get projects with optimized select
     const [projects, total] = await Promise.all([
       prisma.project.findMany({
         where,
-        include: {
-          categories: true,
+        select: {
+          id: true,
+          title: true,
+          slug: true,
+          description: true,
+          location: true,
+          featuredImage: true,
+          images: true,
+          isFeatured: true,
+          publishedAt: true,
+          categories: {
+            select: {
+              id: true,
+              name: true,
+              slug: true,
+            },
+          },
         },
-        orderBy: {
-          publishedAt: 'desc',
-        },
+        orderBy: [
+          { isFeatured: 'desc' },
+          { publishedAt: 'desc' }
+        ],
         skip,
         take,
       }),
@@ -118,6 +134,18 @@ export const getProjectBySlug = async (req: Request, res: Response): Promise<voi
       res.status(404).json({ message: 'Project not found' });
       return;
     }
+
+    // Track view asynchronously
+    prisma.analytics.create({
+      data: {
+        type: 'project_view',
+        resourceId: project.id,
+        resourceType: 'project',
+        path: `/projects/${slug}`,
+        userAgent: req.headers['user-agent'] || null,
+        ipAddress: req.ip || req.connection.remoteAddress || null,
+      },
+    }).catch(console.error);
 
     res.json({
       data: project,

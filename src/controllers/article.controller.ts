@@ -86,6 +86,18 @@ export const getArticleBySlug = async (req: Request, res: Response): Promise<voi
       return;
     }
 
+    // Track view asynchronously
+    prisma.analytics.create({
+      data: {
+        type: 'article_view',
+        resourceId: article.id,
+        resourceType: 'article',
+        path: `/news/detail/${slug}`,
+        userAgent: req.headers['user-agent'] || null,
+        ipAddress: req.ip || req.connection.remoteAddress || null,
+      },
+    }).catch(console.error);
+
     res.json({
       data: article,
       message: 'Article retrieved successfully',

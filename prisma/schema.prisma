@@ -165,3 +165,19 @@ model Service {
   @@index([isActive])
   @@index([order])
 }
+
+model Analytics {
+  id           String   @id @default(uuid())
+  type         String   // "project_view", "article_view", "page_view"
+  resourceId   String?  // ID of project/article if applicable
+  resourceType String?  // "project", "article", "page"
+  path         String   // URL path visited
+  userAgent    String?
+  ipAddress    String?
+  createdAt    DateTime @default(now())
+
+  @@index([type])
+  @@index([resourceId])
+  @@index([createdAt])
+  @@index([path])
+}
