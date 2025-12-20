@@ -49,6 +49,7 @@ export const updateSettings = async (req: Request, res: Response): Promise<void>
 
     // Handle logo upload
     let logoPath = settings?.logo || null;
+    let aboutImagePath = settings?.aboutImage || null;
     let heroImagePaths = settings?.heroImages || [];
 
     if (req.files) {
@@ -62,6 +63,16 @@ export const updateSettings = async (req: Request, res: Response): Promise<void>
         }
         const optimized = await optimizeImage(files.logo[0].path);
         logoPath = optimized.original;
+      }
+      
+      // Handle about image upload
+      if (files.aboutImage && files.aboutImage[0]) {
+        // Delete old about image if exists
+        if (settings?.aboutImage) {
+          await deleteImage(settings.aboutImage);
+        }
+        const optimized = await optimizeImage(files.aboutImage[0].path);
+        aboutImagePath = optimized.original;
       }
       
       // Handle hero images upload
@@ -112,6 +123,7 @@ export const updateSettings = async (req: Request, res: Response): Promise<void>
           seoDefaultTitle: seoDefaultTitle || null,
           seoDefaultDesc: seoDefaultDesc || null,
           logo: logoPath,
+          aboutImage: aboutImagePath,
         },
       });
     } else {
@@ -132,6 +144,7 @@ export const updateSettings = async (req: Request, res: Response): Promise<void>
           seoDefaultTitle: seoDefaultTitle || null,
           seoDefaultDesc: seoDefaultDesc || null,
           logo: logoPath,
+          aboutImage: aboutImagePath,
         },
       });
     }

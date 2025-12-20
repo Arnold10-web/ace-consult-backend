@@ -125,6 +125,7 @@ model Settings {
   phone           String?
   address         String?
   logo            String?  // Company logo URL
+  aboutImage      String?  // About us page image URL
   socialLinks     Json?    // {facebook, twitter, instagram, linkedin}
   heroImages      String[] // URLs for homepage hero
   heroTitle       String?
