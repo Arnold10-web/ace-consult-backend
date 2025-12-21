@@ -19,30 +19,40 @@ echo "📊 Database URL found. Proceeding with migrations..."
 echo "🔧 Generating Prisma client..."
 npx prisma generate
 
-# Check database connection
+# Check database connection with a simple query
 echo "🔌 Checking database connection..."
-npx prisma db ping || {
-  echo "❌ Database connection failed. Retrying in 10 seconds..."
-  sleep 10
-  npx prisma db ping || {
-    echo "❌ Database connection failed again. Exiting."
-    exit 1
-  }
+check_db_connection() {
+  echo "SELECT 1;" | npx prisma db execute --stdin > /dev/null 2>&1
 }
+
+if ! check_db_connection; then
+  echo "⏳ Database not ready. Waiting 10 seconds..."
+  sleep 10
+  if ! check_db_connection; then
+    echo "⏳ Still waiting... Trying one more time in 10 seconds..."
+    sleep 10
+    if ! check_db_connection; then
+      echo "❌ Database connection failed after 3 attempts. Exiting."
+      exit 1
+    fi
+  fi
+fi
 
 echo "✅ Database connection successful!"
 
 # Run pending migrations
 echo "🔄 Running database migrations..."
-npx prisma migrate deploy || {
-  echo "❌ Migration failed. Checking migration status..."
-  npx prisma migrate status
+if ! npx prisma migrate deploy; then
+  echo "⚠️  Initial migration attempt failed. Checking migration status..."
+  npx prisma migrate status || true
   
-  # If migrations are out of sync, reset and re-run
-  echo "🔄 Attempting to resolve migration issues..."
-  npx prisma migrate resolve --applied "$(npx prisma migrate status --json | jq -r '.failedMigrationName')" || true
-  npx prisma migrate deploy
-}
+  echo "🔄 Trying migrate deploy one more time..."
+  if ! npx prisma migrate deploy; then
+    echo "❌ Migration deployment failed. Manual intervention may be required."
+    echo "💡 Tip: Check migration files and database state manually."
+    exit 1
+  fi
+fi
 
 echo "✅ Migrations completed successfully!"
 
