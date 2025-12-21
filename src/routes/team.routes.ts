@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import {
   getTeamMembers,
+  getTeamMemberById,
   createTeamMember,
   updateTeamMember,
   deleteTeamMember,
@@ -10,8 +11,9 @@ import { upload } from '../middleware/upload.middleware';
 
 const router = Router();
 
-// Public route
+// Public routes
 router.get('/', getTeamMembers);
+router.get('/:id', getTeamMemberById);
 
 // Admin routes (protected)
 router.post('/admin', authMiddleware, upload.single('image'), createTeamMember);

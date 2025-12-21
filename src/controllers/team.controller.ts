@@ -23,6 +23,30 @@ export const getTeamMembers = async (_req: Request, res: Response): Promise<void
   }
 };
 
+// PUBLIC: Get team member by ID
+export const getTeamMemberById = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+
+    const teamMember = await prisma.teamMember.findUnique({
+      where: { id },
+    });
+
+    if (!teamMember) {
+      res.status(404).json({ message: 'Team member not found' });
+      return;
+    }
+
+    res.json({
+      data: teamMember,
+      message: 'Team member retrieved successfully',
+    });
+  } catch (error) {
+    console.error('Error fetching team member:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
 // ADMIN: Create team member
 export const createTeamMember = async (req: Request, res: Response): Promise<void> => {
   try {

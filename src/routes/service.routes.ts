@@ -9,6 +9,7 @@ import {
   updateService,
   deleteService,
 } from '../controllers/service.controller';
+import { authMiddleware } from '../middleware/auth.middleware';
 
 const router = Router();
 
@@ -16,8 +17,8 @@ const router = Router();
 router.get('/', getServices);
 
 // ADMIN routes (protected)
-router.get('/admin', authenticateToken, getAdminServices);
-router.get('/:id', authenticateToken, getServiceById);
+router.get('/admin', authMiddleware, getAdminServices);
+router.get('/:id', authMiddleware, getServiceById);
 router.post(
   '/',
   authenticateToken,
