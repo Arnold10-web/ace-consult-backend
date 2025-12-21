@@ -8,7 +8,7 @@
     "numReplicas": 1,
     "restartPolicyType": "ON_FAILURE",
     "restartPolicyMaxRetries": 10,
-    "startCommand": "./scripts/railway-deploy.sh && npm start"
+    "startCommand": "chmod +x ./scripts/railway-deploy.sh && ./scripts/railway-deploy.sh && node dist/index.js"
   },
   "environments": {
     "production": {

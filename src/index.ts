@@ -94,6 +94,32 @@ app.get('/health', (_req: Request, res: Response) => {
   res.json({ status: 'ok', message: 'Server is running' });
 });
 
+// Database test endpoint
+app.get('/api/test-db', async (_req: Request, res: Response) => {
+  try {
+    const { PrismaClient } = await import('@prisma/client');
+    const prisma = new PrismaClient();
+    
+    const projectCount = await prisma.project.count();
+    const articleCount = await prisma.article.count();
+    
+    await prisma.$disconnect();
+    
+    res.json({
+      status: 'database connected',
+      counts: {
+        projects: projectCount,
+        articles: articleCount
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ 
+      status: 'database error', 
+      error: error instanceof Error ? error.message : 'Unknown error' 
+    });
+  }
+});
+
 // API Routes with rate limiting
 app.use('/api', apiRateLimitMiddleware);
 app.use('/api/auth', authRoutes);

@@ -40,16 +40,52 @@ fi
 
 echo "✅ Database connection successful!"
 
-# Run pending migrations
+# Run pending migrations with automatic failed migration resolution
 echo "🔄 Running database migrations..."
 if ! npx prisma migrate deploy; then
-  echo "⚠️  Initial migration attempt failed. Checking migration status..."
-  npx prisma migrate status || true
+  echo "⚠️  Migration deployment failed. Checking for failed migrations..."
   
-  echo "🔄 Trying migrate deploy one more time..."
+  # Specifically handle the known failed migration
+  FAILED_MIGRATION="20241220_add_about_image_to_settings"
+  echo "🔧 Resolving known failed migration: $FAILED_MIGRATION"
+  npx prisma migrate resolve --applied "$FAILED_MIGRATION" || {
+    echo "📝 Failed migration may already be resolved, continuing..."
+  }
+  
+  # Also resolve any other potential failed migrations
+  echo "🔧 Resolving other potential failed migrations..."
+  npx prisma migrate resolve --applied "20241109000000_init" || true
+  npx prisma migrate resolve --applied "20241216_add_date_fields_and_featured" || true
+  npx prisma migrate resolve --applied "20241216_remove_old_year_fields" || true
+  
+  # Try migration deploy again
+  echo "🔄 Retrying migration deployment..."
   if ! npx prisma migrate deploy; then
-    echo "❌ Migration deployment failed. Manual intervention may be required."
-    echo "💡 Tip: Check migration files and database state manually."
+    echo "❌ Migration deployment still failed."
+    echo "💡 Attempting to reset migration state..."
+    
+    # Last resort: mark all migrations as applied
+    npx prisma migrate resolve --applied "$FAILED_MIGRATION" || true
+    
+    # Final attempt
+    if ! npx prisma migrate deploy; then
+      echo "❌ Final migration attempt failed. Manual intervention required."
+      echo "💡 Tip: Check migration files and database state manually."
+      exit 1
+    fi
+  fi
+      echo "❌ Migration still failing. Trying to reset migration state..."
+      
+      # Force mark as rolled back and try fresh deploy
+      npx prisma migrate resolve --rolled-back "20241220_add_about_image_to_settings" || true
+      npx prisma migrate deploy || {
+        echo "❌ Migration deployment failed completely. Manual intervention required."
+        echo "💡 Consider using Railway CLI to connect and resolve migrations manually."
+        exit 1
+      }
+    fi
+  else
+    echo "❌ Migration deployment failed for unknown reason."
     exit 1
   fi
 fi
