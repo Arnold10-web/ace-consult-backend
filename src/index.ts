@@ -142,8 +142,8 @@ app.get('/api/test-db', async (_req: Request, res: Response) => {
 // API Routes with rate limiting
 app.use('/api', apiRateLimitMiddleware);
 app.use('/api/auth', authRoutes);
-app.use('/api/projects', cacheMiddleware(300), projectRoutes); // 5 min cache
-app.use('/api/articles', cacheMiddleware(300), articleRoutes); // 5 min cache
+app.use('/api/projects', projectRoutes); // Remove caching for now
+app.use('/api/articles', articleRoutes); // Remove caching for now
 app.use('/api/team', cacheMiddleware(600), teamRoutes); // 10 min cache
 app.use('/api/media', mediaRoutes);
 app.use('/api/settings', cacheMiddleware(3600), settingsRoutes); // 1 hour cache
