@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
-import { optimizeImage, deleteImage } from '../utils/imageProcessor';
+// Image processing removed; services are text-only
 
 const prisma = new PrismaClient();
 
@@ -73,23 +73,9 @@ export const createService = async (req: Request, res: Response): Promise<void> 
       return;
     }
 
-    // Handle image uploads
-    let iconPath = null;
-    let imagePath = null;
-
-    if (req.files) {
-      const files = req.files as { [fieldname: string]: Express.Multer.File[] };
-      
-      if (files.icon && files.icon[0]) {
-        const optimized = await optimizeImage(files.icon[0].path);
-        iconPath = optimized.original;
-      }
-      
-      if (files.image && files.image[0]) {
-        const optimized = await optimizeImage(files.image[0].path);
-        imagePath = optimized.original;
-      }
-    }
+    // Image/icon uploads removed; services now text-only
+    const iconPath = null;
+    const imagePath = null;
 
     // Parse features if it's a string
     let featuresArray = features || [];
@@ -134,31 +120,9 @@ export const updateService = async (req: Request, res: Response): Promise<void> 
       return;
     }
 
-    // Handle image uploads
-    let iconPath = existingService.icon;
-    let imagePath = existingService.image;
-
-    if (req.files) {
-      const files = req.files as { [fieldname: string]: Express.Multer.File[] };
-      
-      if (files.icon && files.icon[0]) {
-        // Delete old icon
-        if (existingService.icon) {
-          await deleteImage(existingService.icon);
-        }
-        const optimized = await optimizeImage(files.icon[0].path);
-        iconPath = optimized.original;
-      }
-      
-      if (files.image && files.image[0]) {
-        // Delete old image
-        if (existingService.image) {
-          await deleteImage(existingService.image);
-        }
-        const optimized = await optimizeImage(files.image[0].path);
-        imagePath = optimized.original;
-      }
-    }
+    // Image/icon uploads removed; keep existing values null
+    const iconPath = null;
+    const imagePath = null;
 
     // Parse features if it's a string
     let featuresArray = features || existingService.features;
@@ -203,13 +167,7 @@ export const deleteService = async (req: Request, res: Response): Promise<void> 
       return;
     }
 
-    // Delete associated images
-    if (service.icon) {
-      await deleteImage(service.icon);
-    }
-    if (service.image) {
-      await deleteImage(service.image);
-    }
+    // No image/icon cleanup needed anymore
 
     await prisma.service.delete({
       where: { id },

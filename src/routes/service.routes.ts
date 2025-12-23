@@ -1,6 +1,5 @@
 import { Router } from 'express';
 import { authenticateToken } from '../middleware/auth.middleware';
-import { upload } from '../middleware/upload.middleware';
 import {
   getServices,
   getAdminServices,
@@ -22,19 +21,11 @@ router.get('/:id', authMiddleware, getServiceById);
 router.post(
   '/',
   authenticateToken,
-  upload.fields([
-    { name: 'icon', maxCount: 1 },
-    { name: 'image', maxCount: 1 }
-  ]),
   createService
 );
 router.put(
   '/:id',
   authenticateToken,
-  upload.fields([
-    { name: 'icon', maxCount: 1 },
-    { name: 'image', maxCount: 1 }
-  ]),
   updateService
 );
 router.delete('/:id', authenticateToken, deleteService);
