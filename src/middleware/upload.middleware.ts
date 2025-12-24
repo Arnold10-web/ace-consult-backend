@@ -45,8 +45,16 @@ if (!fs.existsSync(UPLOAD_DIR)) {
     console.error(`Failed to create upload directory: ${UPLOAD_DIR}`, error);
     // Fallback to temp directory
     UPLOAD_DIR = '/tmp/uploads';
-    if (!fs.existsSync(UPLOAD_DIR)) {
-      fs.mkdirSync(UPLOAD_DIR, { recursive: true });
+    try {
+      if (!fs.existsSync(UPLOAD_DIR)) {
+        fs.mkdirSync(UPLOAD_DIR, { recursive: true });
+      }
+      console.log(`Using fallback upload directory: ${UPLOAD_DIR}`);
+    } catch (fallbackError) {
+      console.error(`Failed to create fallback directory:`, fallbackError);
+      // Final fallback - use current working directory
+      UPLOAD_DIR = path.join(process.cwd(), 'temp_uploads');
+      console.log(`Using emergency upload directory: ${UPLOAD_DIR}`);
     }
   }
 }
