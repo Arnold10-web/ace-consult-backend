@@ -93,7 +93,7 @@ console.log(`Environment: ${process.env.NODE_ENV}`);
 console.log(`UPLOAD_DIR env var: ${process.env.UPLOAD_DIR}`);
 
 // Static file serving with comprehensive CORS and CORP headers
-app.use('/uploads', (req, res, next) => {
+app.use('/uploads', (_req, res, next) => {
   // CORS headers
   res.header('Access-Control-Allow-Origin', '*');
   res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
@@ -134,7 +134,7 @@ app.use('/uploads', (req, res, next) => {
 }));
 
 // Handle OPTIONS requests for uploads specifically
-app.options('/uploads/*', (req, res) => {
+app.options('/uploads/*', (_req, res) => {
   res.header('Access-Control-Allow-Origin', '*');
   res.header('Access-Control-Allow-Methods', 'GET, OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');

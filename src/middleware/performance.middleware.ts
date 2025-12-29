@@ -38,7 +38,6 @@ export const rateLimitMiddleware = rateLimit({
   message: 'Too many requests from this IP, please try again later.',
   standardHeaders: true,
   legacyHeaders: false,
-  trustProxy: true, // Trust the proxy headers
   keyGenerator: (req: Request) => {
     // Use X-Forwarded-For header first, then fall back to connection IP
     return req.headers['x-forwarded-for'] as string || 
@@ -54,7 +53,6 @@ export const apiRateLimitMiddleware = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 50,
   message: 'API rate limit exceeded, please try again later.',
-  trustProxy: true, // Trust the proxy headers
   keyGenerator: (req: Request) => {
     // Use X-Forwarded-For header first, then fall back to connection IP
     return req.headers['x-forwarded-for'] as string || 
