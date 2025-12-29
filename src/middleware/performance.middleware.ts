@@ -15,26 +15,38 @@ export const compressionMiddleware = compression({
   },
 });
 
-// Security headers
+// Security headers with proper image serving support
 export const securityMiddleware = helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
       styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
       fontSrc: ["'self'", 'https://fonts.gstatic.com'],
-      imgSrc: ["'self'", 'data:', 'https:'],
+      imgSrc: ["'self'", 'data:', 'https:', 'blob:'],
       scriptSrc: ["'self'"],
+      connectSrc: ["'self'", 'https:'],
     },
   },
+  crossOriginResourcePolicy: { policy: "cross-origin" }, // Allow cross-origin access to resources
+  crossOriginEmbedderPolicy: false, // Disable COEP to allow image embedding
 });
 
-// Rate limiting
+// Rate limiting with proper proxy trust
 export const rateLimitMiddleware = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 100, // limit each IP to 100 requests per windowMs
   message: 'Too many requests from this IP, please try again later.',
   standardHeaders: true,
   legacyHeaders: false,
+  trustProxy: true, // Trust the proxy headers
+  keyGenerator: (req: Request) => {
+    // Use X-Forwarded-For header first, then fall back to connection IP
+    return req.headers['x-forwarded-for'] as string || 
+           req.headers['x-real-ip'] as string || 
+           req.connection.remoteAddress || 
+           req.ip || 
+           'unknown';
+  },
 });
 
 // API-specific rate limiting (stricter)
@@ -42,6 +54,15 @@ export const apiRateLimitMiddleware = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 50,
   message: 'API rate limit exceeded, please try again later.',
+  trustProxy: true, // Trust the proxy headers
+  keyGenerator: (req: Request) => {
+    // Use X-Forwarded-For header first, then fall back to connection IP
+    return req.headers['x-forwarded-for'] as string || 
+           req.headers['x-real-ip'] as string || 
+           req.connection.remoteAddress || 
+           req.ip || 
+           'unknown';
+  },
 });
 
 // Response caching middleware

@@ -92,12 +92,55 @@ console.log(`Upload directory: ${UPLOAD_DIR}`);
 console.log(`Environment: ${process.env.NODE_ENV}`);
 console.log(`UPLOAD_DIR env var: ${process.env.UPLOAD_DIR}`);
 
-// Static file serving with CORS headers
-app.use('/uploads', (_req, res, next) => {
+// Static file serving with comprehensive CORS and CORP headers
+app.use('/uploads', (req, res, next) => {
+  // CORS headers
   res.header('Access-Control-Allow-Origin', '*');
   res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+  res.header('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  
+  // Cross-Origin-Resource-Policy header to allow cross-origin access
+  res.header('Cross-Origin-Resource-Policy', 'cross-origin');
+  
+  // Additional security headers for media files
+  res.header('Cross-Origin-Embedder-Policy', 'unsafe-none');
+  res.header('Referrer-Policy', 'strict-origin-when-cross-origin');
+  
+  // Cache headers for images
+  const oneMonth = 30 * 24 * 60 * 60 * 1000; // 30 days in milliseconds
+  res.header('Cache-Control', 'public, max-age=' + Math.floor(oneMonth / 1000));
+  res.header('Expires', new Date(Date.now() + oneMonth).toUTCString());
+  
   next();
-}, express.static(UPLOAD_DIR));
+}, express.static(UPLOAD_DIR, {
+  setHeaders: (res, path) => {
+    // Set proper content type for images
+    if (path.match(/\.(jpg|jpeg|png|webp)$/i)) {
+      const ext = path.split('.').pop()?.toLowerCase();
+      switch (ext) {
+        case 'jpg':
+        case 'jpeg':
+          res.setHeader('Content-Type', 'image/jpeg');
+          break;
+        case 'png':
+          res.setHeader('Content-Type', 'image/png');
+          break;
+        case 'webp':
+          res.setHeader('Content-Type', 'image/webp');
+          break;
+      }
+    }
+  }
+}));
+
+// Handle OPTIONS requests for uploads specifically
+app.options('/uploads/*', (req, res) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+  res.header('Cross-Origin-Resource-Policy', 'cross-origin');
+  res.sendStatus(200);
+});
 
 // Handle preflight requests
 app.options('*', (req, res) => {
