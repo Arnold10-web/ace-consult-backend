@@ -8,6 +8,8 @@ import {
   updateProject,
   deleteProject,
   deleteProjectImage,
+  addRelatedProject,
+  removeRelatedProject,
 } from '../controllers/project.controller';
 import { authMiddleware } from '../middleware/auth.middleware';
 import { upload } from '../middleware/upload.middleware';
@@ -25,5 +27,7 @@ router.post('/admin', authMiddleware, upload.array('images', 20), createProject)
 router.put('/admin/:id', authMiddleware, upload.array('images', 20), updateProject);
 router.delete('/admin/:id', authMiddleware, deleteProject);
 router.delete('/admin/:id/image', authMiddleware, deleteProjectImage);
+router.post('/admin/:id/related', authMiddleware, addRelatedProject);
+router.delete('/admin/:id/related', authMiddleware, removeRelatedProject);
 
 export default router;

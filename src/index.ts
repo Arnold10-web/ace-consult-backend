@@ -106,10 +106,14 @@ app.use('/uploads', (_req, res, next) => {
   res.header('Cross-Origin-Embedder-Policy', 'unsafe-none');
   res.header('Referrer-Policy', 'strict-origin-when-cross-origin');
   
-  // Cache headers for images
-  const oneMonth = 30 * 24 * 60 * 60 * 1000; // 30 days in milliseconds
-  res.header('Cache-Control', 'public, max-age=' + Math.floor(oneMonth / 1000));
-  res.header('Expires', new Date(Date.now() + oneMonth).toUTCString());
+  // Performance headers for faster loading
+  res.header('Vary', 'Accept, Accept-Encoding');
+  
+  // Cache headers for images - reasonable caching for performance vs freshness balance
+  const cacheTime = process.env.NODE_ENV === 'production' ? 30 * 24 * 60 * 60 : 24 * 60 * 60; // 30 days prod, 1 day dev
+  res.header('Cache-Control', `public, max-age=${cacheTime}`);
+  res.header('Expires', new Date(Date.now() + (cacheTime * 1000)).toUTCString());
+  res.header('ETag', `W/"${Date.now()}"`); // Weak ETag for conditional requests
   
   next();
 }, express.static(UPLOAD_DIR, {

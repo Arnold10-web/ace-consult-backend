@@ -41,16 +41,27 @@ export const getProjects = async (req: Request, res: Response): Promise<void> =>
       };
     }
 
-    if (status) {
+    if (status && status !== 'published') {
+      // Allow filtering by project status: completed, ongoing, competition
       where.status = status as string;
     }
 
     if (year) {
       const yearInt = parseInt(year as string);
-      where.startDate = {
-        gte: new Date(`${yearInt}-01-01`),
-        lt: new Date(`${yearInt + 1}-01-01`),
-      };
+      where.OR = [
+        {
+          startDate: {
+            gte: new Date(`${yearInt}-01-01`),
+            lt: new Date(`${yearInt + 1}-01-01`),
+          },
+        },
+        {
+          completionDate: {
+            gte: new Date(`${yearInt}-01-01`),
+            lt: new Date(`${yearInt + 1}-01-01`),
+          },
+        },
+      ];
     }
 
     if (featured === 'true') {
@@ -122,6 +133,9 @@ export const getProjectBySlug = async (req: Request, res: Response): Promise<voi
       include: {
         categories: true,
         relatedProjects: {
+          where: {
+            publishedAt: { not: null },
+          },
           include: {
             categories: true,
           },
@@ -133,6 +147,37 @@ export const getProjectBySlug = async (req: Request, res: Response): Promise<voi
     if (!project || !project.publishedAt) {
       res.status(404).json({ message: 'Project not found' });
       return;
+    }
+
+    // If no manually related projects, find similar ones by category
+    if (project.relatedProjects.length === 0) {
+      const similarProjects = await prisma.project.findMany({
+        where: {
+          AND: [
+            { publishedAt: { not: null } },
+            { id: { not: project.id } },
+            {
+              categories: {
+                some: {
+                  id: {
+                    in: project.categories.map(cat => cat.id),
+                  },
+                },
+              },
+            },
+          ],
+        },
+        include: {
+          categories: true,
+        },
+        take: 3,
+        orderBy: {
+          publishedAt: 'desc',
+        },
+      });
+      
+      // Add similar projects to the response
+      project.relatedProjects = similarProjects as any;
     }
 
     // Track view asynchronously
@@ -526,6 +571,72 @@ export const deleteProject = async (req: Request, res: Response): Promise<void> 
     });
   } catch (error) {
     console.error('Error deleting project:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
+// ADMIN: Add related project
+export const addRelatedProject = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const { relatedProjectId } = req.body;
+
+    if (!relatedProjectId) {
+      res.status(400).json({ message: 'Related project ID is required' });
+      return;
+    }
+
+    // Check if both projects exist
+    const [project, relatedProject] = await Promise.all([
+      prisma.project.findUnique({ where: { id } }),
+      prisma.project.findUnique({ where: { id: relatedProjectId } }),
+    ]);
+
+    if (!project || !relatedProject) {
+      res.status(404).json({ message: 'Project not found' });
+      return;
+    }
+
+    // Add the relationship
+    await prisma.project.update({
+      where: { id },
+      data: {
+        relatedProjects: {
+          connect: { id: relatedProjectId },
+        },
+      },
+    });
+
+    res.json({ message: 'Related project added successfully' });
+  } catch (error) {
+    console.error('Error adding related project:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
+// ADMIN: Remove related project
+export const removeRelatedProject = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const { relatedProjectId } = req.body;
+
+    if (!relatedProjectId) {
+      res.status(400).json({ message: 'Related project ID is required' });
+      return;
+    }
+
+    await prisma.project.update({
+      where: { id },
+      data: {
+        relatedProjects: {
+          disconnect: { id: relatedProjectId },
+        },
+      },
+    });
+
+    res.json({ message: 'Related project removed successfully' });
+  } catch (error) {
+    console.error('Error removing related project:', error);
     res.status(500).json({ message: 'Internal server error' });
   }
 };
