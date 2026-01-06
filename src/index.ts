@@ -146,6 +146,34 @@ app.options('/uploads/*', (_req, res) => {
   res.sendStatus(200);
 });
 
+// Add fallback for optimized images that don't exist
+app.get('/uploads/*_thumb.webp', (req, res, next) => {
+  const originalPath = req.path.replace('_thumb.webp', '.jpg');
+  console.log(`Thumbnail not found, trying: ${originalPath}`);
+  res.redirect(originalPath);
+});
+
+app.get('/uploads/*_medium.webp', (req, res, next) => {
+  const originalPath = req.path.replace('_medium.webp', '.jpg');
+  console.log(`Medium not found, trying: ${originalPath}`);
+  res.redirect(originalPath);
+});
+
+app.get('/uploads/*_large.webp', (req, res, next) => {
+  const originalPath = req.path.replace('_large.webp', '.jpg');
+  console.log(`Large not found, trying: ${originalPath}`);
+  res.redirect(originalPath);
+});
+
+// Handle preflight OPTIONS requests for uploads
+app.options('/uploads/*', (req, res) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+  res.header('Cross-Origin-Resource-Policy', 'cross-origin');
+  res.sendStatus(200);
+});
+
 // Handle preflight requests
 app.options('*', (req, res) => {
   res.header('Access-Control-Allow-Origin', req.headers.origin || '*');

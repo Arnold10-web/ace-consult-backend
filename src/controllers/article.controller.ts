@@ -237,6 +237,14 @@ export const createArticle = async (req: Request, res: Response): Promise<void> 
       finalPublishedAt = new Date(publishedAt);
     }
 
+    console.log('Article creation data:', {
+      title,
+      status,
+      publishedAt,
+      finalPublishedAt,
+      isFeatured
+    }); // Debug log
+
     const article = await prisma.article.create({
       data: {
         title,
@@ -299,6 +307,14 @@ export const updateArticle = async (req: Request, res: Response): Promise<void> 
 
     // Handle isFeatured (could come as 'featured' from form)
     const finalIsFeatured = isFeatured !== undefined ? isFeatured : featured;
+
+    console.log('Article update data:', {
+      title,
+      status,
+      publishedAt,
+      finalPublishedAt,
+      finalIsFeatured
+    }); // Debug log
 
     const article = await prisma.article.update({
       where: { id },
