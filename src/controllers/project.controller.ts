@@ -25,6 +25,8 @@ export const getProjects = async (req: Request, res: Response): Promise<void> =>
       limit = '12',
     } = req.query;
 
+    console.log('Projects request:', { category, status, year, featured, search, page, limit }); // Debug log
+
     const skip = (parseInt(page as string) - 1) * parseInt(limit as string);
     const take = Math.min(parseInt(limit as string), 50); // Max 50 items per page
 
@@ -76,6 +78,8 @@ export const getProjects = async (req: Request, res: Response): Promise<void> =>
       ];
     }
 
+    console.log('Projects query where clause:', JSON.stringify(where, null, 2)); // Debug log
+
     // Get projects with optimized select
     const [projects, total] = await Promise.all([
       prisma.project.findMany({
@@ -107,6 +111,8 @@ export const getProjects = async (req: Request, res: Response): Promise<void> =>
       }),
       prisma.project.count({ where }),
     ]);
+
+    console.log(`Found ${projects.length} projects out of ${total} total`); // Debug log
 
     res.json({
       data: projects,

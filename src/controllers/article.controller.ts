@@ -19,6 +19,8 @@ export const getArticles = async (req: Request, res: Response): Promise<void> =>
     const skip = (parseInt(page as string) - 1) * parseInt(limit as string);
     const take = parseInt(limit as string);
 
+    console.log('Articles request:', { page, limit, tag, search, featured }); // Debug log
+
     const where: any = {
       publishedAt: { not: null },
     };
@@ -39,6 +41,8 @@ export const getArticles = async (req: Request, res: Response): Promise<void> =>
       ];
     }
 
+    console.log('Query where clause:', JSON.stringify(where, null, 2)); // Debug log
+
     const [articles, total] = await Promise.all([
       prisma.article.findMany({
         where,
@@ -53,6 +57,8 @@ export const getArticles = async (req: Request, res: Response): Promise<void> =>
       }),
       prisma.article.count({ where }),
     ]);
+
+    console.log(`Found ${articles.length} articles out of ${total} total`); // Debug log
 
     res.json({
       data: articles,
@@ -115,6 +121,8 @@ export const getAdminArticles = async (req: Request, res: Response): Promise<voi
     const skip = (parseInt(page as string) - 1) * parseInt(limit as string);
     const take = parseInt(limit as string);
 
+    console.log('Admin articles request received'); // Debug log
+
     const [articles, total] = await Promise.all([
       prisma.article.findMany({
         include: {
@@ -128,6 +136,8 @@ export const getAdminArticles = async (req: Request, res: Response): Promise<voi
       }),
       prisma.article.count(),
     ]);
+
+    console.log(`Found ${articles.length} articles out of ${total} total`); // Debug log
 
     res.json({
       data: articles,
