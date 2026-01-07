@@ -52,6 +52,17 @@ export const createTeamMember = async (req: Request, res: Response): Promise<voi
   try {
     const { name, title, department, bio, email, linkedin, order } = req.body;
 
+    console.log('Team member creation data:', {
+      name,
+      title,
+      department,
+      bio,
+      email,
+      linkedin,
+      order,
+      hasFile: !!req.file
+    });
+
     if (!name || !title) {
       res.status(400).json({ message: 'Name and title are required' });
       return;
@@ -70,17 +81,22 @@ export const createTeamMember = async (req: Request, res: Response): Promise<voi
       }
     }
 
+    // Ensure proper data types
+    const memberData = {
+      name: name || '',
+      title: title || '',
+      department: (department && department.trim() !== '') ? department : null,
+      bio: (bio && bio.trim() !== '') ? bio : null,
+      photo: photoUrl,
+      email: (email && email.trim() !== '') ? email : null,
+      linkedin: (linkedin && linkedin.trim() !== '') ? linkedin : null,
+      order: order ? parseInt(order) : 0,
+    };
+
+    console.log('Processed member data:', memberData);
+
     const teamMember = await prisma.teamMember.create({
-      data: {
-        name,
-        title,
-        department: department || null,
-        bio: bio || null,
-        photo: photoUrl,
-        email: email || null,
-        linkedin: linkedin || null,
-        order: order ? parseInt(order) : 0,
-      },
+      data: memberData,
     });
 
     res.status(201).json({

@@ -322,7 +322,7 @@ export const updateArticle = async (req: Request, res: Response): Promise<void> 
         title,
         excerpt: excerpt || null,
         content,
-        featuredImage: featuredImage || null,
+        featuredImage: (featuredImage && typeof featuredImage === 'string' && featuredImage.trim() !== '') ? featuredImage : null,
         authorId: authorId || null,
         tags: tagsArray,
         seoTitle: seoTitle || null,
