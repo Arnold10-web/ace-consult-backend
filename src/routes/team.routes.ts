@@ -16,8 +16,8 @@ router.get('/', getTeamMembers);
 router.get('/:id', getTeamMemberById);
 
 // Admin routes (protected)
-router.post('/admin', authMiddleware, upload.single('image'), createTeamMember);
-router.put('/admin/:id', authMiddleware, upload.single('image'), updateTeamMember);
+router.post('/admin', authMiddleware, upload.single('photo'), createTeamMember);
+router.put('/admin/:id', authMiddleware, upload.single('photo'), updateTeamMember);
 router.delete('/admin/:id', authMiddleware, deleteTeamMember);
 
 export default router;

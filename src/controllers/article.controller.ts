@@ -242,7 +242,8 @@ export const createArticle = async (req: Request, res: Response): Promise<void> 
       status,
       publishedAt,
       finalPublishedAt,
-      isFeatured
+      isFeatured,
+      isFeaturedBoolean: isFeatured === 'on' || isFeatured === 'true' || isFeatured === true || isFeatured === 1
     }); // Debug log
 
     const article = await prisma.article.create({
@@ -257,7 +258,7 @@ export const createArticle = async (req: Request, res: Response): Promise<void> 
         seoTitle: seoTitle || null,
         seoDescription: seoDescription || null,
         publishedAt: finalPublishedAt,
-        isFeatured: isFeatured === 'true' || isFeatured === true,
+        isFeatured: isFeatured === 'on' || isFeatured === 'true' || isFeatured === true || isFeatured === 1,
       },
       include: {
         author: true,
@@ -307,13 +308,17 @@ export const updateArticle = async (req: Request, res: Response): Promise<void> 
 
     // Handle isFeatured (could come as 'featured' from form)
     const finalIsFeatured = isFeatured !== undefined ? isFeatured : featured;
+    
+    // Convert to boolean properly
+    const isFeaturedBoolean = finalIsFeatured === 'on' || finalIsFeatured === 'true' || finalIsFeatured === true || finalIsFeatured === 1;
 
     console.log('Article update data:', {
       title,
       status,
       publishedAt,
       finalPublishedAt,
-      finalIsFeatured
+      finalIsFeatured,
+      isFeaturedBoolean
     }); // Debug log
 
     const article = await prisma.article.update({
@@ -328,7 +333,7 @@ export const updateArticle = async (req: Request, res: Response): Promise<void> 
         seoTitle: seoTitle || null,
         seoDescription: seoDescription || null,
         publishedAt: finalPublishedAt,
-        isFeatured: finalIsFeatured === 'true' || finalIsFeatured === true,
+        isFeatured: isFeaturedBoolean,
       },
       include: {
         author: true,
