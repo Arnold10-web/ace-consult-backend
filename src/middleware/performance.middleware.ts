@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import compression from 'compression';
 import helmet from 'helmet';
-import rateLimit from 'express-rate-limit';
+import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
 
 // Compression middleware
 export const compressionMiddleware = compression({
@@ -39,12 +39,15 @@ export const rateLimitMiddleware = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   keyGenerator: (req: Request) => {
-    // Use X-Forwarded-For header first, then fall back to connection IP
-    return req.headers['x-forwarded-for'] as string || 
-           req.headers['x-real-ip'] as string || 
-           req.connection.remoteAddress || 
-           req.ip || 
-           'unknown';
+    // Get the IP using proper headers with fallback
+    const ip = req.headers['x-forwarded-for'] as string ||
+               req.headers['x-real-ip'] as string ||
+               req.connection.remoteAddress ||
+               req.ip ||
+               'unknown';
+    
+    // Use ipKeyGenerator to properly handle IPv6
+    return ipKeyGenerator(ip);
   },
 });
 
@@ -54,12 +57,15 @@ export const apiRateLimitMiddleware = rateLimit({
   max: 50,
   message: 'API rate limit exceeded, please try again later.',
   keyGenerator: (req: Request) => {
-    // Use X-Forwarded-For header first, then fall back to connection IP
-    return req.headers['x-forwarded-for'] as string || 
-           req.headers['x-real-ip'] as string || 
-           req.connection.remoteAddress || 
-           req.ip || 
-           'unknown';
+    // Get the IP using proper headers with fallback
+    const ip = req.headers['x-forwarded-for'] as string ||
+               req.headers['x-real-ip'] as string ||
+               req.connection.remoteAddress ||
+               req.ip ||
+               'unknown';
+    
+    // Use ipKeyGenerator to properly handle IPv6
+    return ipKeyGenerator(ip);
   },
 });
 
