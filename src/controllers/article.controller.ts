@@ -200,6 +200,7 @@ export const createArticle = async (req: Request, res: Response): Promise<void> 
     } = req.body;
 
     if (!title || !content) {
+      console.log('Validation failed - missing required fields:', { title: !!title, content: !!content });
       res.status(400).json({ message: 'Title and content are required' });
       return;
     }
@@ -207,27 +208,43 @@ export const createArticle = async (req: Request, res: Response): Promise<void> 
     // Handle featured image upload
     let featuredImagePath = null;
     if (req.file) {
-      const optimized = await optimizeImage(req.file.path);
-      featuredImagePath = optimized.original;
+      console.log('Processing uploaded file:', req.file.filename);
+      try {
+        const optimized = await optimizeImage(req.file.path);
+        featuredImagePath = optimized.original;
+        console.log('Image optimization successful:', featuredImagePath);
+      } catch (imageError) {
+        console.error('Image optimization failed:', imageError);
+        // Use the original file path as fallback
+        featuredImagePath = req.file.path;
+      }
     }
 
     // Generate slug
     let slug = generateSlug(title);
+    console.log('Generated initial slug:', slug);
     
     // Ensure slug is unique
     let slugExists = await prisma.article.findUnique({ where: { slug } });
     let counter = 1;
     while (slugExists) {
+      console.log(`Slug ${slug} exists, trying with counter ${counter}`);
       slug = `${generateSlug(title)}-${counter}`;
       slugExists = await prisma.article.findUnique({ where: { slug } });
       counter++;
+      if (counter > 100) {
+        console.error('Infinite loop protection: Too many slug conflicts');
+        throw new Error('Unable to generate unique slug');
+      }
     }
+    console.log('Final unique slug:', slug);
 
     // Handle tags - convert string to array if needed
     let tagsArray = tags || [];
     if (typeof tags === 'string') {
       tagsArray = tags.split(',').map((tag: string) => tag.trim()).filter(Boolean);
     }
+    console.log('Processed tags:', tagsArray, 'type:', typeof tagsArray);
 
     // Determine publishedAt based on status
     let finalPublishedAt = null;
@@ -237,14 +254,40 @@ export const createArticle = async (req: Request, res: Response): Promise<void> 
       finalPublishedAt = new Date(publishedAt);
     }
 
+    // Validate authorId if provided
+    if (authorId) {
+      const authorExists = await prisma.teamMember.findUnique({
+        where: { id: authorId }
+      });
+      if (!authorExists) {
+        res.status(400).json({ message: 'Invalid author ID provided' });
+        return;
+      }
+    }
+
     console.log('Article creation data:', {
       title,
       status,
       publishedAt,
       finalPublishedAt,
       isFeatured,
-      isFeaturedBoolean: isFeatured === 'on' || isFeatured === 'true' || isFeatured === true || isFeatured === 1
+      isFeaturedBoolean: isFeatured === 'on' || isFeatured === 'true' || isFeatured === true || isFeatured === 1,
+      authorId
     }); // Debug log
+
+    console.log('About to create article with data:', {
+      title,
+      slug,
+      excerpt: excerpt || null,
+      content: content?.substring(0, 100) + '...', // truncated for logging
+      featuredImage: featuredImagePath,
+      authorId: authorId || null,
+      tags: tagsArray,
+      seoTitle: seoTitle || null,
+      seoDescription: seoDescription || null,
+      publishedAt: finalPublishedAt,
+      isFeatured: isFeatured === 'on' || isFeatured === 'true' || isFeatured === true || isFeatured === 1,
+    });
 
     const article = await prisma.article.create({
       data: {
@@ -271,7 +314,15 @@ export const createArticle = async (req: Request, res: Response): Promise<void> 
     });
   } catch (error: any) {
     console.error('Error creating article:', error);
-    res.status(500).json({ message: 'Internal server error' });
+    console.error('Error details:', {
+      code: error.code,
+      message: error.message,
+      meta: error.meta
+    });
+    res.status(500).json({ 
+      message: 'Internal server error',
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+    });
   }
 };
 

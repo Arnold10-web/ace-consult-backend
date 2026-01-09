@@ -124,32 +124,32 @@ export const getDashboardAnalytics = async (_req: Request, res: Response): Promi
       
       // Daily views for chart (last 14 days)
       prisma.$queryRaw`
-        SELECT DATE(created_at) as date, COUNT(*) as views
+        SELECT DATE("createdAt") as date, COUNT(*) as views
         FROM "Analytics" 
-        WHERE created_at >= NOW() - INTERVAL '14 days'
-        GROUP BY DATE(created_at)
+        WHERE "createdAt" >= NOW() - INTERVAL '14 days'
+        GROUP BY DATE("createdAt")
         ORDER BY date ASC
       `,
       
       // Monthly content creation
       prisma.$queryRaw`
         SELECT 
-          DATE_TRUNC('month', created_at) as month,
+          DATE_TRUNC('month', "createdAt") as month,
           'projects' as type,
           COUNT(*) as count
         FROM "Project"
-        WHERE created_at >= NOW() - INTERVAL '12 months'
-        GROUP BY DATE_TRUNC('month', created_at)
+        WHERE "createdAt" >= NOW() - INTERVAL '12 months'
+        GROUP BY DATE_TRUNC('month', "createdAt")
         
         UNION ALL
         
         SELECT 
-          DATE_TRUNC('month', created_at) as month,
+          DATE_TRUNC('month', "createdAt") as month,
           'articles' as type,
           COUNT(*) as count
         FROM "Article"
-        WHERE created_at >= NOW() - INTERVAL '12 months'
-        GROUP BY DATE_TRUNC('month', created_at)
+        WHERE "createdAt" >= NOW() - INTERVAL '12 months'
+        GROUP BY DATE_TRUNC('month', "createdAt")
         
         ORDER BY month DESC
       `,
@@ -237,12 +237,12 @@ export const getResourceAnalytics = async (req: Request, res: Response): Promise
         },
       }),
       prisma.$queryRaw`
-        SELECT DATE(created_at) as date, COUNT(*) as views
+        SELECT DATE("createdAt") as date, COUNT(*) as views
         FROM "Analytics" 
         WHERE type = ${`${type}_view`}
-        AND resource_id = ${id}
-        AND created_at >= ${startDate}
-        GROUP BY DATE(created_at)
+        AND "resourceId" = ${id}
+        AND "createdAt" >= ${startDate}
+        GROUP BY DATE("createdAt")
         ORDER BY date ASC
       `,
     ]);
