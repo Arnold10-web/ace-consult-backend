@@ -407,7 +407,7 @@ export const createProject = async (req: Request, res: Response): Promise<void> 
         isFeatured: isFeatured === 'true' || isFeatured === true,
         images: imageUrls,
         featuredImage: imageUrls[0] || null,
-        publishedAt: status === 'published' ? (publishedAt ? new Date(publishedAt) : new Date()) : null,
+        publishedAt: status === 'published' ? new Date() : null,
         categories: categoryIds ? {
           connect: JSON.parse(categoryIds).map((id: string) => ({ id })),
         } : undefined,
@@ -515,7 +515,17 @@ export const updateProject = async (req: Request, res: Response): Promise<void> 
       isFeatured: isFeatured === 'true' || isFeatured === true,
       images: allImages,
       featuredImage: allImages[0] || null,
-      publishedAt: status === 'published' ? (publishedAt ? new Date(publishedAt) : new Date()) : null,
+    // Handle publishedAt based on status transition
+    if (status === 'published' && existingProject.publishedAt === null) {
+      // Publishing for the first time
+      updateData.publishedAt = new Date();
+    } else if (status === 'published') {
+      // Keep existing publishedAt if already published
+      updateData.publishedAt = existingProject.publishedAt;
+    } else {
+      // Draft or archived - remove publishedAt
+      updateData.publishedAt = null;
+    }
     };
 
     // Handle categories

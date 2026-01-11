@@ -1,5 +1,4 @@
 import { Router } from 'express';
-import { authenticateToken } from '../middleware/auth.middleware';
 import {
   getServices,
   getAdminServices,
@@ -18,10 +17,10 @@ router.get('/', getServices);
 
 // ADMIN routes (protected)
 router.get('/admin', authMiddleware, getAdminServices);
-router.get('/:id', authMiddleware, getServiceById);
+router.get('/admin/:id', authMiddleware, getServiceById);
 router.post(
-  '/',
-  authenticateToken,
+  '/admin',
+  authMiddleware,
   upload.fields([
     { name: 'icon', maxCount: 1 },
     { name: 'image', maxCount: 1 }
@@ -29,14 +28,14 @@ router.post(
   createService
 );
 router.put(
-  '/:id',
-  authenticateToken,
+  '/admin/:id',
+  authMiddleware,
   upload.fields([
     { name: 'icon', maxCount: 1 },
     { name: 'image', maxCount: 1 }
   ]),
   updateService
 );
-router.delete('/:id', authenticateToken, deleteService);
+router.delete('/admin/:id', authMiddleware, deleteService);
 
 export default router;

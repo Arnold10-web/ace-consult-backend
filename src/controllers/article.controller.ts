@@ -247,12 +247,7 @@ export const createArticle = async (req: Request, res: Response): Promise<void> 
     console.log('Processed tags:', tagsArray, 'type:', typeof tagsArray);
 
     // Determine publishedAt based on status
-    let finalPublishedAt = null;
-    if (status === 'published') {
-      finalPublishedAt = publishedAt ? new Date(publishedAt) : new Date();
-    } else if (publishedAt) {
-      finalPublishedAt = new Date(publishedAt);
-    }
+    const finalPublishedAt = status === 'published' ? new Date() : null;
 
     // Validate authorId if provided
     if (authorId) {
@@ -351,10 +346,27 @@ export const updateArticle = async (req: Request, res: Response): Promise<void> 
       tagsArray = tags.split(',').map((tag: string) => tag.trim()).filter(Boolean);
     }
 
-    // Determine publishedAt based on status
-    let finalPublishedAt = publishedAt ? new Date(publishedAt) : null;
-    if (status === 'published' && !finalPublishedAt) {
+    // Get existing article first to check current state
+    const existingArticle = await prisma.article.findUnique({
+      where: { id }
+    });
+
+    if (!existingArticle) {
+      res.status(404).json({ message: 'Article not found' });
+      return;
+    }
+
+    // Determine publishedAt based on status transition
+    let finalPublishedAt;
+    if (status === 'published' && !existingArticle.publishedAt) {
+      // Publishing for the first time
       finalPublishedAt = new Date();
+    } else if (status === 'published') {
+      // Keep existing publishedAt if already published
+      finalPublishedAt = existingArticle.publishedAt;
+    } else {
+      // Draft - remove publishedAt
+      finalPublishedAt = null;
     }
 
     // Handle isFeatured (could come as 'featured' from form)
