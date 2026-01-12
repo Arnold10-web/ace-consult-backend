@@ -29,10 +29,9 @@ export const getArticles = async (req: Request, res: Response): Promise<void> =>
       where.tags = { has: tag as string };
     }
 
-    // Temporarily disabled until migration is deployed
-    // if (featured === 'true') {
-    //   where.isFeatured = true;
-    // }
+    if (featured === 'true') {
+      where.isFeatured = true;
+    }
 
     if (search) {
       where.OR = [
@@ -263,11 +262,11 @@ export const createArticle = async (req: Request, res: Response): Promise<void> 
 
     console.log('Article creation data:', {
       title,
-      // status,
+      status,
       publishedAt,
       finalPublishedAt,
-      // isFeatured,
-      // isFeaturedBoolean: isFeatured === 'on' || isFeatured === 'true' || isFeatured === true || isFeatured === 1,
+      isFeatured,
+      isFeaturedBoolean: isFeatured === 'on' || isFeatured === 'true' || isFeatured === true || isFeatured === 1,
       authorId
     }); // Debug log
 
@@ -282,7 +281,7 @@ export const createArticle = async (req: Request, res: Response): Promise<void> 
       seoTitle: seoTitle || null,
       seoDescription: seoDescription || null,
       publishedAt: finalPublishedAt,
-      // isFeatured: isFeatured === 'on' || isFeatured === 'true' || isFeatured === true || isFeatured === 1,
+      isFeatured: isFeatured === 'on' || isFeatured === 'true' || isFeatured === true || isFeatured === 1,
     });
 
     const article = await prisma.article.create({
@@ -297,8 +296,8 @@ export const createArticle = async (req: Request, res: Response): Promise<void> 
         seoTitle: seoTitle || null,
         seoDescription: seoDescription || null,
         publishedAt: finalPublishedAt,
-        // isFeatured: isFeatured === 'on' || isFeatured === 'true' || isFeatured === true || isFeatured === 1,
-      },
+        isFeatured: isFeatured === 'on' || isFeatured === 'true' || isFeatured === true || isFeatured === 1,
+      },,
       include: {
         author: true,
       },
@@ -357,35 +356,32 @@ export const updateArticle = async (req: Request, res: Response): Promise<void> 
       return;
     }
 
-    // Temporarily disabled until migration deploys
     // Determine publishedAt based on status transition
     let finalPublishedAt;
-    // if (status === 'published' && !existingArticle.publishedAt) {
-    //   // Publishing for the first time
-    //   finalPublishedAt = new Date();
-    // } else if (status === 'published') {
-    //   // Keep existing publishedAt if already published
-    //   finalPublishedAt = existingArticle.publishedAt;
-    // } else {
-    //   // Draft - remove publishedAt
-    //   finalPublishedAt = null;
-    // }
-    finalPublishedAt = publishedAt || existingArticle.publishedAt;
+    if (status === 'published' && !existingArticle.publishedAt) {
+      // Publishing for the first time
+      finalPublishedAt = new Date();
+    } else if (status === 'published') {
+      // Keep existing publishedAt if already published
+      finalPublishedAt = existingArticle.publishedAt;
+    } else {
+      // Draft - remove publishedAt
+      finalPublishedAt = null;
+    }
 
-    // Temporarily disabled until migration deploys
     // Handle isFeatured (could come as 'featured' from form)
-    // const finalIsFeatured = isFeatured !== undefined ? isFeatured : featured;
-    // 
-    // // Convert to boolean properly
-    // const isFeaturedBoolean = finalIsFeatured === 'on' || finalIsFeatured === 'true' || finalIsFeatured === true || finalIsFeatured === 1;
+    const finalIsFeatured = isFeatured !== undefined ? isFeatured : featured;
+    
+    // Convert to boolean properly
+    const isFeaturedBoolean = finalIsFeatured === 'on' || finalIsFeatured === 'true' || finalIsFeatured === true || finalIsFeatured === 1;
 
     console.log('Article update data:', {
       title,
-      // status,
+      status,
       publishedAt,
       finalPublishedAt,
-      // finalIsFeatured,
-      // isFeaturedBoolean
+      finalIsFeatured,
+      isFeaturedBoolean
     }); // Debug log
 
     const article = await prisma.article.update({
@@ -400,7 +396,7 @@ export const updateArticle = async (req: Request, res: Response): Promise<void> 
         seoTitle: seoTitle || null,
         seoDescription: seoDescription || null,
         publishedAt: finalPublishedAt,
-        // isFeatured: isFeaturedBoolean,
+        isFeatured: isFeaturedBoolean,
       },
       include: {
         author: true,
