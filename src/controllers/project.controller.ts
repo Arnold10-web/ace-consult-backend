@@ -515,6 +515,8 @@ export const updateProject = async (req: Request, res: Response): Promise<void> 
       isFeatured: isFeatured === 'true' || isFeatured === true,
       images: allImages,
       featuredImage: allImages[0] || null,
+    };
+
     // Handle publishedAt based on status transition
     if (status === 'published' && existingProject.publishedAt === null) {
       // Publishing for the first time
@@ -526,7 +528,6 @@ export const updateProject = async (req: Request, res: Response): Promise<void> 
       // Draft or archived - remove publishedAt
       updateData.publishedAt = null;
     }
-    };
 
     // Handle categories
     if (categoryIds) {
