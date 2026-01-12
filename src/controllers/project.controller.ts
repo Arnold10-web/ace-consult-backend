@@ -349,7 +349,6 @@ export const createProject = async (req: Request, res: Response): Promise<void> 
       awards,
       isFeatured,
       categoryIds,
-      publishedAt,
     } = req.body;
 
     // Validate required fields
@@ -451,7 +450,6 @@ export const updateProject = async (req: Request, res: Response): Promise<void> 
       awards,
       isFeatured,
       categoryIds,
-      publishedAt,
       existingImages,
     } = req.body;
 
