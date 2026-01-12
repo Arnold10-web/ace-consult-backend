@@ -297,7 +297,7 @@ export const createArticle = async (req: Request, res: Response): Promise<void> 
         seoDescription: seoDescription || null,
         publishedAt: finalPublishedAt,
         isFeatured: isFeatured === 'on' || isFeatured === 'true' || isFeatured === true || isFeatured === 1,
-      },,
+      },
       include: {
         author: true,
       },
