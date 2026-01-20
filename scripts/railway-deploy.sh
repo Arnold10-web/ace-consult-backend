@@ -55,6 +55,8 @@ if ! npx prisma migrate deploy; then
   npx prisma migrate resolve --applied "20241109000000_init" || true
   npx prisma migrate resolve --applied "20241216_add_date_fields_and_featured" || true
   npx prisma migrate resolve --applied "20241216_remove_old_year_fields" || true
+  npx prisma migrate resolve --applied "20250112000000_add_status_and_featured_to_articles" || true
+  npx prisma migrate resolve --applied "20260120124526_add_missing_analytics_and_service_tables" || true
   
   # Try migration deploy again
   echo "🔄 Retrying migration deployment..."
