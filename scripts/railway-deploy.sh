@@ -86,6 +86,18 @@ if ! npx prisma migrate deploy; then
   npx prisma migrate resolve --applied "20241216_remove_old_year_fields" 2>/dev/null || true
   npx prisma migrate resolve --applied "20260120124526_add_missing_analytics_and_service_tables" 2>/dev/null || true
   
+  # Final attempt - apply manual schema fixes
+  echo "🔧 Applying manual schema fixes for articles table..."
+  psql "$DATABASE_URL" -c "
+    -- Remove foreign key constraint if it exists
+    ALTER TABLE \"Article\" DROP CONSTRAINT IF EXISTS \"Article_authorId_fkey\";
+    -- Remove index if it exists  
+    DROP INDEX IF EXISTS \"Article_authorId_idx\";
+    -- Remove the authorId column if it exists
+    ALTER TABLE \"Article\" DROP COLUMN IF EXISTS \"authorId\";
+  " 2>/dev/null || true
+  echo "✅ Manual schema fixes applied"
+  
   # Try migration deploy again
   echo "🔄 Retrying migration deployment..."
   if ! npx prisma migrate deploy; then

@@ -70,7 +70,6 @@ model Article {
   excerpt        String?
   content        String      @db.Text
   featuredImage  String?
-  authorId       String?     // Temporary - keeping for backward compatibility
   tags           String[]
   seoTitle       String?
   seoDescription String?
@@ -82,7 +81,6 @@ model Article {
 
   @@index([slug])
   @@index([publishedAt])
-  @@index([authorId])
   @@index([isFeatured])
   @@index([status])
 }
