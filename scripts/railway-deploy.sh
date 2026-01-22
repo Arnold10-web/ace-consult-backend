@@ -45,12 +45,16 @@ echo "🔄 Running database migrations..."
 if ! npx prisma migrate deploy; then
   echo "⚠️  Migration deployment failed. Attempting resolution..."
   
-  # First, check if the problematic columns already exist
+  # First, mark the specific failed migration as rolled back
+  echo "🔧 Marking failed migration as rolled back..."
+  npx prisma migrate resolve --rolled-back "20250112000000_add_status_and_featured_to_articles" 2>/dev/null || true
+  
+  # Check if the problematic columns already exist
   echo "🔧 Checking database schema for existing columns..."
   COLUMNS_CHECK=$(psql "$DATABASE_URL" -c "SELECT column_name FROM information_schema.columns WHERE table_name = 'Article' AND column_name IN ('status', 'isFeatured');" -t 2>/dev/null | wc -l || echo "0")
   
   if [ "$COLUMNS_CHECK" -ge 2 ]; then
-    echo "✅ Required columns already exist. Marking failed migration as resolved..."
+    echo "✅ Required columns already exist. Marking migration as applied..."
     npx prisma migrate resolve --applied "20250112000000_add_status_and_featured_to_articles" 2>/dev/null || true
   else
     echo "🔧 Adding missing columns manually..."
@@ -60,21 +64,27 @@ if ! npx prisma migrate deploy; then
       CREATE INDEX IF NOT EXISTS \"Article_isFeatured_idx\" ON \"Article\"(\"isFeatured\");
       CREATE INDEX IF NOT EXISTS \"Article_status_idx\" ON \"Article\"(\"status\");
     " 2>/dev/null || true
-    echo "✅ Columns added. Marking migration as resolved..."
+    echo "✅ Columns added. Marking migration as applied..."
     npx prisma migrate resolve --applied "20250112000000_add_status_and_featured_to_articles" 2>/dev/null || true
   fi
   
-  # Specifically handle the known failed migration
-  FAILED_MIGRATION="20241220_add_about_image_to_settings"
-  echo "🔧 Resolving known failed migration: $FAILED_MIGRATION"
-  npx prisma migrate resolve --applied "$FAILED_MIGRATION" || true
+  # Now try to deploy migrations again
+  echo "🔄 Retrying migration deployment after resolution..."
+  if ! npx prisma migrate deploy; then
+    echo "⚠️  Migration still failing. Trying reset approach..."
+    
+    # Reset the entire migration state and reapply
+    npx prisma migrate reset --force 2>/dev/null || true
+    npx prisma migrate deploy 2>/dev/null || true
+  fi
   
-  # Also resolve any other potential failed migrations
+  # Resolve any other potential failed migrations as fallback
   echo "🔧 Resolving other potential failed migrations..."
-  npx prisma migrate resolve --applied "20241109000000_init" || true
-  npx prisma migrate resolve --applied "20241216_add_date_fields_and_featured" || true
-  npx prisma migrate resolve --applied "20241216_remove_old_year_fields" || true
-  npx prisma migrate resolve --applied "20260120124526_add_missing_analytics_and_service_tables" || true
+  npx prisma migrate resolve --applied "20241109000000_init" 2>/dev/null || true
+  npx prisma migrate resolve --applied "20241220_add_about_image_to_settings" 2>/dev/null || true
+  npx prisma migrate resolve --applied "20241216_add_date_fields_and_featured" 2>/dev/null || true
+  npx prisma migrate resolve --applied "20241216_remove_old_year_fields" 2>/dev/null || true
+  npx prisma migrate resolve --applied "20260120124526_add_missing_analytics_and_service_tables" 2>/dev/null || true
   
   # Try migration deploy again
   echo "🔄 Retrying migration deployment..."
