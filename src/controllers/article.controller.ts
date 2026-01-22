@@ -245,7 +245,6 @@ export const createArticle = async (req: Request, res: Response): Promise<void> 
       finalPublishedAt,
       isFeatured,
       isFeaturedBoolean: isFeatured === 'on' || isFeatured === 'true' || isFeatured === true || isFeatured === 1,
-      authorId
     }); // Debug log
 
     console.log('About to create article with data:', {
@@ -254,7 +253,6 @@ export const createArticle = async (req: Request, res: Response): Promise<void> 
       excerpt: excerpt || null,
       content: content?.substring(0, 100) + '...', // truncated for logging
       featuredImage: featuredImagePath,
-      authorId: authorId || null,
       tags: tagsArray,
       seoTitle: seoTitle || null,
       seoDescription: seoDescription || null,
