@@ -89,6 +89,20 @@ if ! npx prisma migrate deploy; then
   # Final attempt - apply manual schema fixes
   echo "🔧 Applying manual schema fixes for articles table..."
   psql "$DATABASE_URL" -c "
+    -- Add missing Article columns
+    ALTER TABLE \"Article\" ADD COLUMN IF NOT EXISTS \"status\" TEXT NOT NULL DEFAULT 'draft';
+    ALTER TABLE \"Article\" ADD COLUMN IF NOT EXISTS \"isFeatured\" BOOLEAN NOT NULL DEFAULT false;
+    -- Add missing Settings columns
+    ALTER TABLE \"Settings\" ADD COLUMN IF NOT EXISTS \"logo\" TEXT;
+    ALTER TABLE \"Settings\" ADD COLUMN IF NOT EXISTS \"aboutImage\" TEXT;
+    ALTER TABLE \"Settings\" ADD COLUMN IF NOT EXISTS \"heroImages\" TEXT[];
+    ALTER TABLE \"Settings\" ADD COLUMN IF NOT EXISTS \"heroTitle\" TEXT;
+    ALTER TABLE \"Settings\" ADD COLUMN IF NOT EXISTS \"heroSubtitle\" TEXT;
+    ALTER TABLE \"Settings\" ADD COLUMN IF NOT EXISTS \"seoDefaultTitle\" TEXT;
+    ALTER TABLE \"Settings\" ADD COLUMN IF NOT EXISTS \"seoDefaultDesc\" TEXT;
+    -- Create missing indexes
+    CREATE INDEX IF NOT EXISTS \"Article_status_idx\" ON \"Article\"(\"status\");
+    CREATE INDEX IF NOT EXISTS \"Article_isFeatured_idx\" ON \"Article\"(\"isFeatured\");
     -- Remove foreign key constraint if it exists
     ALTER TABLE \"Article\" DROP CONSTRAINT IF EXISTS \"Article_authorId_fkey\";
     -- Remove index if it exists  
