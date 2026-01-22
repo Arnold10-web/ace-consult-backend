@@ -267,6 +267,7 @@ export const createArticle = async (req: Request, res: Response): Promise<void> 
         excerpt: excerpt || null,
         content,
         featuredImage: featuredImagePath,
+        authorId: null, // Set to null since we're not using authors anymore
         tags: tagsArray,
         seoTitle: seoTitle || null,
         seoDescription: seoDescription || null,
@@ -362,6 +363,7 @@ export const updateArticle = async (req: Request, res: Response): Promise<void> 
         excerpt: excerpt || null,
         content,
         featuredImage: (featuredImage && typeof featuredImage === 'string' && featuredImage.trim() !== '') ? featuredImage : null,
+        authorId: null, // Set to null since we're not using authors anymore
         tags: tagsArray,
         seoTitle: seoTitle || null,
         seoDescription: seoDescription || null,
