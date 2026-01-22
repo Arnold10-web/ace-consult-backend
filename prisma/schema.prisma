@@ -70,8 +70,6 @@ model Article {
   excerpt        String?
   content        String      @db.Text
   featuredImage  String?
-  author         TeamMember? @relation(fields: [authorId], references: [id])
-  authorId       String?
   tags           String[]
   seoTitle       String?
   seoDescription String?
@@ -83,7 +81,6 @@ model Article {
 
   @@index([slug])
   @@index([publishedAt])
-  @@index([authorId])
   @@index([isFeatured])
   @@index([status])
 }
@@ -98,7 +95,6 @@ model TeamMember {
   email      String?
   linkedin   String?
   order      Int       @default(0)
-  articles   Article[]
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
 

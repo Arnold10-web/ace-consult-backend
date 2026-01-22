@@ -46,9 +46,6 @@ export const getArticles = async (req: Request, res: Response): Promise<void> =>
     const [articles, total] = await Promise.all([
       prisma.article.findMany({
         where,
-        include: {
-          author: true,
-        },
         orderBy: {
           publishedAt: 'desc',
         },
@@ -82,9 +79,6 @@ export const getArticleBySlug = async (req: Request, res: Response): Promise<voi
 
     const article = await prisma.article.findUnique({
       where: { slug },
-      include: {
-        author: true,
-      },
     });
 
     if (!article || !article.publishedAt) {
@@ -125,9 +119,6 @@ export const getAdminArticles = async (req: Request, res: Response): Promise<voi
 
     const [articles, total] = await Promise.all([
       prisma.article.findMany({
-        include: {
-          author: true,
-        },
         orderBy: {
           createdAt: 'desc',
         },
@@ -163,9 +154,6 @@ export const getArticleById = async (req: Request, res: Response): Promise<void>
       where: {
         id: id,
       },
-      include: {
-        author: true,
-      },
     });
 
     if (!article) {
@@ -190,7 +178,6 @@ export const createArticle = async (req: Request, res: Response): Promise<void> 
       title,
       excerpt,
       content,
-      authorId,
       tags,
       seoTitle,
       seoDescription,
@@ -249,16 +236,7 @@ export const createArticle = async (req: Request, res: Response): Promise<void> 
     // Determine publishedAt based on status
     const finalPublishedAt = status === 'published' ? new Date() : null;
 
-    // Validate authorId if provided
-    if (authorId) {
-      const authorExists = await prisma.teamMember.findUnique({
-        where: { id: authorId }
-      });
-      if (!authorExists) {
-        res.status(400).json({ message: 'Invalid author ID provided' });
-        return;
-      }
-    }
+
 
     console.log('Article creation data:', {
       title,
@@ -291,15 +269,11 @@ export const createArticle = async (req: Request, res: Response): Promise<void> 
         excerpt: excerpt || null,
         content,
         featuredImage: featuredImagePath,
-        authorId: authorId || null,
         tags: tagsArray,
         seoTitle: seoTitle || null,
         seoDescription: seoDescription || null,
         publishedAt: finalPublishedAt,
         isFeatured: isFeatured === 'on' || isFeatured === 'true' || isFeatured === true || isFeatured === 1,
-      },
-      include: {
-        author: true,
       },
     });
 
@@ -330,7 +304,6 @@ export const updateArticle = async (req: Request, res: Response): Promise<void> 
       excerpt,
       content,
       featuredImage,
-      authorId,
       tags,
       seoTitle,
       seoDescription,
@@ -391,15 +364,11 @@ export const updateArticle = async (req: Request, res: Response): Promise<void> 
         excerpt: excerpt || null,
         content,
         featuredImage: (featuredImage && typeof featuredImage === 'string' && featuredImage.trim() !== '') ? featuredImage : null,
-        authorId: authorId || null,
         tags: tagsArray,
         seoTitle: seoTitle || null,
         seoDescription: seoDescription || null,
         publishedAt: finalPublishedAt,
         isFeatured: isFeaturedBoolean,
-      },
-      include: {
-        author: true,
       },
     });
 
