@@ -344,9 +344,6 @@ export const createProject = async (req: Request, res: Response): Promise<void> 
       status,
       client,
       projectSize,
-      technicalSpecs,
-      teamCredits,
-      awards,
       isFeatured,
       categoryIds,
     } = req.body;
