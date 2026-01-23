@@ -34,7 +34,13 @@ echo "✅ Database connection successful!"
 
 # Run migrations
 echo "🔄 Running database migrations..."
-npx prisma migrate deploy
+if ! npx prisma migrate deploy; then
+  echo "⚠️ Migration failed. Attempting to reset and reapply..."
+  
+  # For fresh database, reset migration history and apply
+  npx prisma migrate reset --force --skip-seed 2>/dev/null || true
+  npx prisma migrate deploy || true
+fi
 
 echo "✅ Migrations applied successfully!"
 

@@ -20,14 +20,11 @@ CREATE TABLE "Project" (
     "location" TEXT NOT NULL,
     "city" TEXT,
     "country" TEXT,
-    "yearStart" INTEGER NOT NULL,
-    "yearCompletion" INTEGER,
+    "startDate" TIMESTAMP(3),
+    "completionDate" TIMESTAMP(3),
     "status" TEXT NOT NULL,
     "client" TEXT,
     "projectSize" TEXT,
-    "technicalSpecs" JSONB,
-    "teamCredits" TEXT[],
-    "awards" TEXT[],
     "isFeatured" BOOLEAN NOT NULL DEFAULT false,
     "featuredImage" TEXT,
     "images" TEXT[],
@@ -56,10 +53,11 @@ CREATE TABLE "Article" (
     "excerpt" TEXT,
     "content" TEXT NOT NULL,
     "featuredImage" TEXT,
-    "authorId" TEXT,
     "tags" TEXT[],
     "seoTitle" TEXT,
     "seoDescription" TEXT,
+    "status" TEXT NOT NULL DEFAULT 'draft',
+    "isFeatured" BOOLEAN NOT NULL DEFAULT false,
     "publishedAt" TIMESTAMP(3),
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
@@ -107,6 +105,8 @@ CREATE TABLE "Settings" (
     "contactEmail" TEXT NOT NULL,
     "phone" TEXT,
     "address" TEXT,
+    "logo" TEXT,
+    "aboutImage" TEXT,
     "socialLinks" JSONB,
     "heroImages" TEXT[],
     "heroTitle" TEXT,
@@ -131,6 +131,36 @@ CREATE TABLE "ContactSubmission" (
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "ContactSubmission_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Service" (
+    "id" TEXT NOT NULL,
+    "title" TEXT NOT NULL,
+    "description" TEXT NOT NULL,
+    "icon" TEXT,
+    "image" TEXT,
+    "features" TEXT[],
+    "isActive" BOOLEAN NOT NULL DEFAULT true,
+    "order" INTEGER NOT NULL DEFAULT 0,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "Service_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Analytics" (
+    "id" TEXT NOT NULL,
+    "type" TEXT NOT NULL,
+    "resourceId" TEXT,
+    "resourceType" TEXT,
+    "path" TEXT NOT NULL,
+    "userAgent" TEXT,
+    "ipAddress" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "Analytics_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -161,7 +191,7 @@ CREATE INDEX "Project_isFeatured_idx" ON "Project"("isFeatured");
 CREATE INDEX "Project_publishedAt_idx" ON "Project"("publishedAt");
 
 -- CreateIndex
-CREATE INDEX "Project_yearStart_idx" ON "Project"("yearStart");
+CREATE INDEX "Project_startDate_idx" ON "Project"("startDate");
 
 -- CreateIndex
 CREATE INDEX "Project_status_idx" ON "Project"("status");
@@ -185,7 +215,10 @@ CREATE INDEX "Article_slug_idx" ON "Article"("slug");
 CREATE INDEX "Article_publishedAt_idx" ON "Article"("publishedAt");
 
 -- CreateIndex
-CREATE INDEX "Article_authorId_idx" ON "Article"("authorId");
+CREATE INDEX "Article_isFeatured_idx" ON "Article"("isFeatured");
+
+-- CreateIndex
+CREATE INDEX "Article_status_idx" ON "Article"("status");
 
 -- CreateIndex
 CREATE INDEX "TeamMember_order_idx" ON "TeamMember"("order");
@@ -200,6 +233,24 @@ CREATE INDEX "ContactSubmission_createdAt_idx" ON "ContactSubmission"("createdAt
 CREATE INDEX "ContactSubmission_isRead_idx" ON "ContactSubmission"("isRead");
 
 -- CreateIndex
+CREATE INDEX "Service_isActive_idx" ON "Service"("isActive");
+
+-- CreateIndex
+CREATE INDEX "Service_order_idx" ON "Service"("order");
+
+-- CreateIndex
+CREATE INDEX "Analytics_type_idx" ON "Analytics"("type");
+
+-- CreateIndex
+CREATE INDEX "Analytics_resourceId_idx" ON "Analytics"("resourceId");
+
+-- CreateIndex
+CREATE INDEX "Analytics_createdAt_idx" ON "Analytics"("createdAt");
+
+-- CreateIndex
+CREATE INDEX "Analytics_path_idx" ON "Analytics"("path");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "_RelatedProjects_AB_unique" ON "_RelatedProjects"("A", "B");
 
 -- CreateIndex
@@ -212,9 +263,6 @@ CREATE UNIQUE INDEX "_ProjectCategories_AB_unique" ON "_ProjectCategories"("A", 
 CREATE INDEX "_ProjectCategories_B_index" ON "_ProjectCategories"("B");
 
 -- AddForeignKey
-ALTER TABLE "Article" ADD CONSTRAINT "Article_authorId_fkey" FOREIGN KEY ("authorId") REFERENCES "TeamMember"("id") ON DELETE SET NULL ON UPDATE CASCADE;
-
--- AddForeignKey
 ALTER TABLE "_RelatedProjects" ADD CONSTRAINT "_RelatedProjects_A_fkey" FOREIGN KEY ("A") REFERENCES "Project"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
@@ -225,4 +273,3 @@ ALTER TABLE "_ProjectCategories" ADD CONSTRAINT "_ProjectCategories_A_fkey" FORE
 
 -- AddForeignKey
 ALTER TABLE "_ProjectCategories" ADD CONSTRAINT "_ProjectCategories_B_fkey" FOREIGN KEY ("B") REFERENCES "Project"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
