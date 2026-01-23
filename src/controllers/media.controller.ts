@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
-import { optimizeImage, deleteImage } from '../utils/imageProcessor';
+import { processImage, deleteImage } from '../utils/simpleImageProcessor';
 
 const prisma = new PrismaClient();
 
@@ -18,12 +18,12 @@ export const uploadMedia = async (req: Request, res: Response): Promise<void> =>
 
     for (const file of files) {
       try {
-        const optimized = await optimizeImage(file.path);
+        const optimized = await processImage(file.path);
         
         const media = await prisma.media.create({
           data: {
             filename: file.originalname,
-            filepath: optimized.original,
+            filepath: optimized,
             mimetype: file.mimetype,
             size: file.size,
           },

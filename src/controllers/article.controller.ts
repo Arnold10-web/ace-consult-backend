@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
-import { deleteImage, optimizeImage } from '../utils/imageProcessor';
+import { deleteImage, processImage } from '../utils/simpleImageProcessor';
 
 const prisma = new PrismaClient();
 
@@ -197,8 +197,8 @@ export const createArticle = async (req: Request, res: Response): Promise<void> 
     if (req.file) {
       console.log('Processing uploaded file:', req.file.filename);
       try {
-        const optimized = await optimizeImage(req.file.path);
-        featuredImagePath = optimized.original;
+        const processed = await processImage(req.file.path);
+        featuredImagePath = processed;
         console.log('Image optimization successful:', featuredImagePath);
       } catch (imageError) {
         console.error('Image optimization failed:', imageError);

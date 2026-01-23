@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
-import { optimizeImage, deleteImage } from '../utils/imageProcessor';
+import { processImage, deleteImage } from '../utils/simpleImageProcessor';
 
 const prisma = new PrismaClient();
 
@@ -81,13 +81,13 @@ export const createService = async (req: Request, res: Response): Promise<void> 
       const files = req.files as { [fieldname: string]: Express.Multer.File[] };
       
       if (files.icon && files.icon[0]) {
-        const optimized = await optimizeImage(files.icon[0].path);
-        iconPath = optimized.original;
+        const optimized = await processImage(files.icon[0].path);
+        iconPath = optimized;
       }
       
       if (files.image && files.image[0]) {
-        const optimized = await optimizeImage(files.image[0].path);
-        imagePath = optimized.original;
+        const optimized = await processImage(files.image[0].path);
+        imagePath = optimized;
       }
     }
 
@@ -146,8 +146,8 @@ export const updateService = async (req: Request, res: Response): Promise<void> 
         if (existingService.icon) {
           await deleteImage(existingService.icon);
         }
-        const optimized = await optimizeImage(files.icon[0].path);
-        iconPath = optimized.original;
+        const optimized = await processImage(files.icon[0].path);
+        iconPath = optimized;
       }
       
       if (files.image && files.image[0]) {
@@ -155,8 +155,8 @@ export const updateService = async (req: Request, res: Response): Promise<void> 
         if (existingService.image) {
           await deleteImage(existingService.image);
         }
-        const optimized = await optimizeImage(files.image[0].path);
-        imagePath = optimized.original;
+        const optimized = await processImage(files.image[0].path);
+        imagePath = optimized;
       }
     }
 

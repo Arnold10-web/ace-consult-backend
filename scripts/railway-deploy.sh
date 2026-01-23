@@ -1,7 +1,10 @@
 #!/bin/bash
 
-# Railway Auto-Migration Script
-# Clean deployment script for fresh database
+# Railway Deployment Script  
+# Database schema is stable - skip migrations for faster deployments
+# 
+# To force migrations (if needed):
+# Set environment variable FORCE_MIGRATE=true in Railway dashboard
 
 set -e  # Exit on any error
 
@@ -9,13 +12,13 @@ echo "🚀 Starting Railway deployment post-build tasks..."
 
 # Check if DATABASE_URL is available
 if [ -z "$DATABASE_URL" ]; then
-  echo "❌ DATABASE_URL not found. Skipping migrations."
+  echo "❌ DATABASE_URL not found. Skipping setup."
   exit 1
 fi
 
-echo "📊 Database URL found. Proceeding with migrations..."
+echo "📊 Database URL found. Proceeding with setup..."
 
-# Generate Prisma Client
+# Generate Prisma Client (required for runtime)
 echo "🔧 Generating Prisma client..."
 npx prisma generate
 
@@ -32,19 +35,15 @@ fi
 
 echo "✅ Database connection successful!"
 
-# Run migrations
-echo "🔄 Running database migrations..."
-if ! npx prisma migrate deploy; then
-  echo "⚠️ Migration failed. Attempting database reset and reapply..."
-  
-  # For fresh database, reset and reapply all migrations
-  echo "🗄️ Resetting database and applying fresh schema..."
-  npx prisma db push --force-reset --accept-data-loss 2>/dev/null || npx prisma migrate deploy
+# Skip migrations - database schema is stable
+echo "⏭️ Skipping migrations - database schema is stable"
+
+# Optional: Only run migrations if FORCE_MIGRATE is set
+if [ "$FORCE_MIGRATE" = "true" ]; then
+  echo "🔄 Force migration requested - running migrations..."
+  npx prisma migrate deploy
+  echo "✅ Migrations completed!"
 fi
-
-echo "✅ Migrations applied successfully!"
-
-echo "✅ Migration process completed!"
 
 # Always run admin creation for fresh deployments
 echo "🌱 Setting up initial data..."
@@ -74,7 +73,10 @@ echo "🎉 Railway deployment post-build tasks completed successfully!"
 echo "📝 Summary:"
 echo "   - Prisma client generated"
 echo "   - Database connection verified"
-echo "   - Migrations applied"
+echo "   - Migrations skipped (stable schema)"
+if [ "$FORCE_MIGRATE" = "true" ]; then
+  echo "   - Force migration completed"
+fi
 if [ "$SEED_ON_DEPLOY" = "true" ]; then
   echo "   - Default data seeded"
 fi

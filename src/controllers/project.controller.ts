@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
-import { optimizeImage, deleteImage } from '../utils/imageProcessor';
+import { processImage, deleteImage } from '../utils/simpleImageProcessor';
 
 const prisma = new PrismaClient();
 
@@ -375,8 +375,8 @@ export const createProject = async (req: Request, res: Response): Promise<void> 
     if (files && files.length > 0) {
       for (const file of files) {
         try {
-          const optimized = await optimizeImage(file.path);
-          imageUrls.push(optimized.original);
+          const optimized = await processImage(file.path);
+          imageUrls.push(optimized);
         } catch (error) {
           console.error('Error optimizing image:', error);
         }
@@ -461,8 +461,8 @@ export const updateProject = async (req: Request, res: Response): Promise<void> 
     if (files && files.length > 0) {
       for (const file of files) {
         try {
-          const optimized = await optimizeImage(file.path);
-          newImageUrls.push(optimized.original);
+          const optimized = await processImage(file.path);
+          newImageUrls.push(optimized);
         } catch (error) {
           console.error('Error optimizing image:', error);
         }

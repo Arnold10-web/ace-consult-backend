@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcrypt';
-import { optimizeImage, deleteImage } from '../utils/imageProcessor';
+import { processImage, deleteImage } from '../utils/simpleImageProcessor';
 
 const prisma = new PrismaClient();
 
@@ -61,8 +61,8 @@ export const updateSettings = async (req: Request, res: Response): Promise<void>
         if (settings?.logo) {
           await deleteImage(settings.logo);
         }
-        const optimized = await optimizeImage(files.logo[0].path);
-        logoPath = optimized.original;
+        const optimized = await processImage(files.logo[0].path);
+        logoPath = optimized;
       }
       
       // Handle about image upload
@@ -71,8 +71,8 @@ export const updateSettings = async (req: Request, res: Response): Promise<void>
         if (settings?.aboutImage) {
           await deleteImage(settings.aboutImage);
         }
-        const optimized = await optimizeImage(files.aboutImage[0].path);
-        aboutImagePath = optimized.original;
+        const optimized = await processImage(files.aboutImage[0].path);
+        aboutImagePath = optimized;
       }
       
       // Handle hero images upload
@@ -87,8 +87,8 @@ export const updateSettings = async (req: Request, res: Response): Promise<void>
         // Process new hero images
         const newHeroImages = [];
         for (const file of files.heroImages) {
-          const optimized = await optimizeImage(file.path);
-          newHeroImages.push(optimized.original);
+          const optimized = await processImage(file.path);
+          newHeroImages.push(optimized);
         }
         heroImagePaths = newHeroImages;
       }
