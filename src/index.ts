@@ -20,6 +20,7 @@ import contactRoutes from './routes/contact.routes';
 import categoryRoutes from './routes/category.routes';
 import serviceRoutes from './routes/service.routes';
 import analyticsRoutes from './routes/analytics.routes';
+import setupRoutes from './routes/setup.routes';
 
 // Load environment variables
 dotenv.config();
@@ -216,6 +217,7 @@ app.get('/api/test-db', async (_req: Request, res: Response) => {
 
 // API Routes with rate limiting
 app.use('/api', apiRateLimitMiddleware);
+app.use('/api/setup', setupRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/projects', projectRoutes); // Remove caching for now
 app.use('/api/articles', articleRoutes); // Remove caching for now

@@ -46,13 +46,16 @@ echo "✅ Migrations applied successfully!"
 
 echo "✅ Migration process completed!"
 
-# Seed default data if needed
+# Always run admin creation for fresh deployments
+echo "🌱 Setting up initial data..."
+
+# Run one-time admin creation (always run this)
+echo "👤 Setting up admin user..."
+npx tsx scripts/createAdminOnce.ts || echo "⚠️ Admin setup completed or skipped"
+
+# Seed other default data if environment variable is set
 if [ "$NODE_ENV" = "production" ] && [ "$SEED_ON_DEPLOY" = "true" ]; then
-  echo "🌱 Seeding default data..."
-  
-  # Run one-time admin creation
-  echo "👤 Setting up admin user (one-time only)..."
-  npx tsx scripts/createAdminOnce.ts || echo "⚠️ Admin setup completed or skipped"
+  echo "📁 Seeding additional default data..."
   
   # Run default settings creation
   echo "⚙️ Creating default settings..."
@@ -62,8 +65,10 @@ if [ "$NODE_ENV" = "production" ] && [ "$SEED_ON_DEPLOY" = "true" ]; then
   echo "📁 Seeding default categories..."
   npx tsx scripts/seedCategories.ts || echo "⚠️ Category seeding completed or skipped"
   
-  echo "✅ Default data seeding completed"
+  echo "✅ Additional data seeding completed"
 fi
+
+echo "✅ Initial setup completed!"
 
 echo "🎉 Railway deployment post-build tasks completed successfully!"
 echo "📝 Summary:"
