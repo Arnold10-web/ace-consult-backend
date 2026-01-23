@@ -5,3 +5,6 @@ uploads/*
 !uploads/.gitkeep
 *.log
 .DS_Store
+
+# Admin creation flag file
+.admin-created

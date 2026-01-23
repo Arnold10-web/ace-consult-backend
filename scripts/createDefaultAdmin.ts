@@ -9,17 +9,17 @@ async function createDefaultAdmin() {
     const adminCount = await prisma.admin.count();
     
     if (adminCount > 0) {
-      console.log('⏭️  Admin user already exists. Skipping...');
-      process.exit(0);
+      console.log('⏭️  Admin user already exists. Skipping admin creation...');
+      return;
     }
 
     console.log('🚀 Creating default admin user...');
 
-    // Default admin credentials (change these after first login!)
+    // Fixed admin credentials for initial setup
     const defaultAdmin = {
-      name: process.env.ADMIN_NAME || 'Admin',
-      email: process.env.ADMIN_EMAIL || 'admin@aceconsultltd.com',
-      password: process.env.ADMIN_PASSWORD || 'Admin@123456',
+      name: 'Admin',
+      email: 'admin@aceconsultltd.com',
+      password: 'Admin@123456',
     };
 
     // Hash password
@@ -38,11 +38,10 @@ async function createDefaultAdmin() {
     console.log('✅ Default admin user created successfully!');
     console.log(`\n📧 Email: ${admin.email}`);
     console.log(`🔑 Password: ${defaultAdmin.password}`);
-    console.log('\n⚠️  IMPORTANT: Change your password after first login!');
+    console.log('\n⚠️  IMPORTANT: This admin will only be created once. Change your password after first login!');
 
   } catch (error) {
     console.error('❌ Error creating admin:', error);
-    process.exit(1);
   } finally {
     await prisma.$disconnect();
   }

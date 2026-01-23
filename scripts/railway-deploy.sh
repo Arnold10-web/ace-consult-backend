@@ -50,14 +50,19 @@ echo "✅ Migration process completed!"
 if [ "$NODE_ENV" = "production" ] && [ "$SEED_ON_DEPLOY" = "true" ]; then
   echo "🌱 Seeding default data..."
   
-  # Run default admin creation
-  npx tsx scripts/createDefaultAdmin.ts 2>/dev/null || echo "⚠️ Admin creation skipped"
+  # Run one-time admin creation
+  echo "👤 Setting up admin user (one-time only)..."
+  npx tsx scripts/createAdminOnce.ts || echo "⚠️ Admin setup completed or skipped"
   
   # Run default settings creation
-  npx tsx scripts/createDefaultSettings.ts 2>/dev/null || echo "⚠️ Settings creation skipped"
+  echo "⚙️ Creating default settings..."
+  npx tsx scripts/createDefaultSettings.ts || echo "⚠️ Settings creation completed or skipped"
   
   # Run category seeding
-  npx tsx scripts/seedCategories.ts 2>/dev/null || echo "⚠️ Category seeding skipped"
+  echo "📁 Seeding default categories..."
+  npx tsx scripts/seedCategories.ts || echo "⚠️ Category seeding completed or skipped"
+  
+  echo "✅ Default data seeding completed"
 fi
 
 echo "🎉 Railway deployment post-build tasks completed successfully!"
