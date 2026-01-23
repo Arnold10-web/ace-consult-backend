@@ -1,16 +1,20 @@
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
-import fs from 'fs';
-import path from 'path';
+import { writeFileSync, existsSync } from 'node:fs';
+import { join, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 const prisma = new PrismaClient();
 
 async function createAdminOnce() {
-  const flagFile = path.join(__dirname, '../.admin-created');
+  const flagFile = join(__dirname, '../.admin-created');
   
   try {
     // Check if flag file exists (admin already created)
-    if (fs.existsSync(flagFile)) {
+    if (existsSync(flagFile)) {
       console.log('🔒 Admin setup already completed. Skipping...');
       return;
     }
@@ -21,7 +25,7 @@ async function createAdminOnce() {
     if (adminCount > 0) {
       console.log('👤 Admin user already exists in database');
       // Create flag file to prevent future runs
-      fs.writeFileSync(flagFile, 'Admin created on: ' + new Date().toISOString());
+      writeFileSync(flagFile, 'Admin created on: ' + new Date().toISOString());
       console.log('🔒 Admin creation disabled for future deployments');
       return;
     }
@@ -47,7 +51,7 @@ async function createAdminOnce() {
     });
 
     // Create flag file to prevent future admin creation
-    fs.writeFileSync(flagFile, `Admin created on: ${new Date().toISOString()}\nAdmin ID: ${admin.id}`);
+    writeFileSync(flagFile, `Admin created on: ${new Date().toISOString()}\nAdmin ID: ${admin.id}`);
 
     console.log('✅ Admin user created successfully!');
     console.log(`📧 Email: ${admin.email}`);
