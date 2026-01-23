@@ -270,6 +270,7 @@ export const createArticle = async (req: Request, res: Response): Promise<void> 
         tags: tagsArray,
         seoTitle: seoTitle || null,
         seoDescription: seoDescription || null,
+        status: status || 'draft', // Add status field
         publishedAt: finalPublishedAt,
         isFeatured: isFeatured === 'on' || isFeatured === 'true' || isFeatured === true || isFeatured === 1,
       },
@@ -365,6 +366,7 @@ export const updateArticle = async (req: Request, res: Response): Promise<void> 
         tags: tagsArray,
         seoTitle: seoTitle || null,
         seoDescription: seoDescription || null,
+        status: status || existingArticle.status, // Add status field
         publishedAt: finalPublishedAt,
         isFeatured: isFeaturedBoolean,
       },
