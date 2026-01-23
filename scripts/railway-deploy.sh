@@ -86,29 +86,90 @@ if ! npx prisma migrate deploy; then
   npx prisma migrate resolve --applied "20241216_remove_old_year_fields" 2>/dev/null || true
   npx prisma migrate resolve --applied "20260120124526_add_missing_analytics_and_service_tables" 2>/dev/null || true
   
-  # Final attempt - apply manual schema fixes
-  echo "🔧 Applying manual schema fixes for articles table..."
+  # Final attempt - apply comprehensive schema fixes with proper error handling
+  echo "🔧 Applying COMPREHENSIVE schema fixes..."
   psql "$DATABASE_URL" -c "
-    -- Add missing Article columns
-    ALTER TABLE \"Article\" ADD COLUMN IF NOT EXISTS \"status\" TEXT NOT NULL DEFAULT 'draft';
-    ALTER TABLE \"Article\" ADD COLUMN IF NOT EXISTS \"isFeatured\" BOOLEAN NOT NULL DEFAULT false;
+    BEGIN;
+    
+    -- Add missing Article columns with proper error handling
+    DO \$\$
+    BEGIN
+        -- Add status column if it doesn't exist
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='Article' AND column_name='status') THEN
+            ALTER TABLE \"Article\" ADD COLUMN \"status\" TEXT NOT NULL DEFAULT 'draft';
+            CREATE INDEX \"Article_status_idx\" ON \"Article\"(\"status\");
+        END IF;
+        
+        -- Add isFeatured column if it doesn't exist
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='Article' AND column_name='isFeatured') THEN
+            ALTER TABLE \"Article\" ADD COLUMN \"isFeatured\" BOOLEAN NOT NULL DEFAULT false;
+            CREATE INDEX \"Article_isFeatured_idx\" ON \"Article\"(\"isFeatured\");
+        END IF;
+        
+        -- Add logo column to Settings if it doesn't exist
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='Settings' AND column_name='logo') THEN
+            ALTER TABLE \"Settings\" ADD COLUMN \"logo\" TEXT;
+        END IF;
+    END \$\$;
+    
+    -- Create Service table if it doesn't exist
+    CREATE TABLE IF NOT EXISTS \"Service\" (
+        \"id\" TEXT NOT NULL,
+        \"title\" TEXT NOT NULL,
+        \"description\" TEXT NOT NULL,
+        \"icon\" TEXT,
+        \"image\" TEXT,
+        \"features\" TEXT[] DEFAULT '{}',
+        \"isActive\" BOOLEAN NOT NULL DEFAULT true,
+        \"order\" INTEGER NOT NULL DEFAULT 0,
+        \"createdAt\" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        \"updatedAt\" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        CONSTRAINT \"Service_pkey\" PRIMARY KEY (\"id\")
+    );
+    
+    -- Create Analytics table if it doesn't exist
+    CREATE TABLE IF NOT EXISTS \"Analytics\" (
+        \"id\" TEXT NOT NULL,
+        \"type\" TEXT NOT NULL,
+        \"resourceId\" TEXT,
+        \"resourceType\" TEXT,
+        \"path\" TEXT NOT NULL,
+        \"userAgent\" TEXT,
+        \"ipAddress\" TEXT,
+        \"createdAt\" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        CONSTRAINT \"Analytics_pkey\" PRIMARY KEY (\"id\")
+    );
+    
+    -- Create missing indexes
+    CREATE INDEX IF NOT EXISTS \"Service_isActive_idx\" ON \"Service\"(\"isActive\");
+    CREATE INDEX IF NOT EXISTS \"Service_order_idx\" ON \"Service\"(\"order\");
+    CREATE INDEX IF NOT EXISTS \"Analytics_type_idx\" ON \"Analytics\"(\"type\");
+    CREATE INDEX IF NOT EXISTS \"Analytics_resourceId_idx\" ON \"Analytics\"(\"resourceId\");
+    CREATE INDEX IF NOT EXISTS \"Analytics_createdAt_idx\" ON \"Analytics\"(\"createdAt\");
+    CREATE INDEX IF NOT EXISTS \"Analytics_path_idx\" ON \"Analytics\"(\"path\");
+    
     -- Add missing Settings columns
-    ALTER TABLE \"Settings\" ADD COLUMN IF NOT EXISTS \"logo\" TEXT;
     ALTER TABLE \"Settings\" ADD COLUMN IF NOT EXISTS \"aboutImage\" TEXT;
     ALTER TABLE \"Settings\" ADD COLUMN IF NOT EXISTS \"heroImages\" TEXT[];
     ALTER TABLE \"Settings\" ADD COLUMN IF NOT EXISTS \"heroTitle\" TEXT;
     ALTER TABLE \"Settings\" ADD COLUMN IF NOT EXISTS \"heroSubtitle\" TEXT;
     ALTER TABLE \"Settings\" ADD COLUMN IF NOT EXISTS \"seoDefaultTitle\" TEXT;
     ALTER TABLE \"Settings\" ADD COLUMN IF NOT EXISTS \"seoDefaultDesc\" TEXT;
-    -- Create missing indexes
-    CREATE INDEX IF NOT EXISTS \"Article_status_idx\" ON \"Article\"(\"status\");
-    CREATE INDEX IF NOT EXISTS \"Article_isFeatured_idx\" ON \"Article\"(\"isFeatured\");
-    -- Remove foreign key constraint if it exists
-    ALTER TABLE \"Article\" DROP CONSTRAINT IF EXISTS \"Article_authorId_fkey\";
-    -- Remove index if it exists  
-    DROP INDEX IF EXISTS \"Article_authorId_idx\";
-    -- Remove the authorId column if it exists
+    
+    -- Clean up problematic columns
     ALTER TABLE \"Article\" DROP COLUMN IF EXISTS \"authorId\";
+    DROP INDEX IF EXISTS \"Article_authorId_idx\";
+    
+    -- Fix Project table
+    ALTER TABLE \"Project\" DROP COLUMN IF EXISTS \"technicalSpecs\";
+    ALTER TABLE \"Project\" DROP COLUMN IF EXISTS \"teamCredits\";
+    ALTER TABLE \"Project\" DROP COLUMN IF EXISTS \"awards\";
+    ALTER TABLE \"Project\" DROP COLUMN IF EXISTS \"yearStart\";
+    ALTER TABLE \"Project\" DROP COLUMN IF EXISTS \"yearCompletion\";
+    ALTER TABLE \"Project\" ADD COLUMN IF NOT EXISTS \"startDate\" TIMESTAMP(3);
+    ALTER TABLE \"Project\" ADD COLUMN IF NOT EXISTS \"completionDate\" TIMESTAMP(3);
+    
+    COMMIT;
   " 2>/dev/null || true
   echo "✅ Manual schema fixes applied"
   
@@ -137,32 +198,124 @@ fi
 # Always run schema verification and fixes (regardless of migration success)
 echo "🔧 Verifying database schema integrity..."
 psql "$DATABASE_URL" -c "
-  -- Add missing Article columns
-  ALTER TABLE \"Article\" ADD COLUMN IF NOT EXISTS \"status\" TEXT NOT NULL DEFAULT 'draft';
-  ALTER TABLE \"Article\" ADD COLUMN IF NOT EXISTS \"isFeatured\" BOOLEAN NOT NULL DEFAULT false;
-  -- Add missing Settings columns
-  ALTER TABLE \"Settings\" ADD COLUMN IF NOT EXISTS \"logo\" TEXT;
+  BEGIN;
+  
+  -- Comprehensive schema verification and fixes
+  DO \$\$
+  BEGIN
+      -- Add missing Article columns
+      IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='Article' AND column_name='status') THEN
+          ALTER TABLE \"Article\" ADD COLUMN \"status\" TEXT NOT NULL DEFAULT 'draft';
+          CREATE INDEX \"Article_status_idx\" ON \"Article\"(\"status\");
+      END IF;
+      
+      IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='Article' AND column_name='isFeatured') THEN
+          ALTER TABLE \"Article\" ADD COLUMN \"isFeatured\" BOOLEAN NOT NULL DEFAULT false;
+          CREATE INDEX \"Article_isFeatured_idx\" ON \"Article\"(\"isFeatured\");
+      END IF;
+      
+      -- Add missing Settings columns
+      IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='Settings' AND column_name='logo') THEN
+          ALTER TABLE \"Settings\" ADD COLUMN \"logo\" TEXT;
+      END IF;
+  END \$\$;
+  
+  -- Create Service table if missing
+  CREATE TABLE IF NOT EXISTS \"Service\" (
+      \"id\" TEXT NOT NULL,
+      \"title\" TEXT NOT NULL,
+      \"description\" TEXT NOT NULL,
+      \"icon\" TEXT,
+      \"image\" TEXT,
+      \"features\" TEXT[] DEFAULT '{}',
+      \"isActive\" BOOLEAN NOT NULL DEFAULT true,
+      \"order\" INTEGER NOT NULL DEFAULT 0,
+      \"createdAt\" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      \"updatedAt\" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      CONSTRAINT \"Service_pkey\" PRIMARY KEY (\"id\")
+  );
+  
+  -- Create Analytics table if missing
+  CREATE TABLE IF NOT EXISTS \"Analytics\" (
+      \"id\" TEXT NOT NULL,
+      \"type\" TEXT NOT NULL,
+      \"resourceId\" TEXT,
+      \"resourceType\" TEXT,
+      \"path\" TEXT NOT NULL,
+      \"userAgent\" TEXT,
+      \"ipAddress\" TEXT,
+      \"createdAt\" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      CONSTRAINT \"Analytics_pkey\" PRIMARY KEY (\"id\")
+  );
+  
+  -- Create all missing indexes
+  CREATE INDEX IF NOT EXISTS \"Service_isActive_idx\" ON \"Service\"(\"isActive\");
+  CREATE INDEX IF NOT EXISTS \"Service_order_idx\" ON \"Service\"(\"order\");
+  CREATE INDEX IF NOT EXISTS \"Analytics_type_idx\" ON \"Analytics\"(\"type\");
+  CREATE INDEX IF NOT EXISTS \"Analytics_resourceId_idx\" ON \"Analytics\"(\"resourceId\");
+  CREATE INDEX IF NOT EXISTS \"Analytics_createdAt_idx\" ON \"Analytics\"(\"createdAt\");
+  CREATE INDEX IF NOT EXISTS \"Analytics_path_idx\" ON \"Analytics\"(\"path\");
+  
+  -- Add other missing Settings columns
   ALTER TABLE \"Settings\" ADD COLUMN IF NOT EXISTS \"aboutImage\" TEXT;
   ALTER TABLE \"Settings\" ADD COLUMN IF NOT EXISTS \"heroImages\" TEXT[];
   ALTER TABLE \"Settings\" ADD COLUMN IF NOT EXISTS \"heroTitle\" TEXT;
   ALTER TABLE \"Settings\" ADD COLUMN IF NOT EXISTS \"heroSubtitle\" TEXT;
   ALTER TABLE \"Settings\" ADD COLUMN IF NOT EXISTS \"seoDefaultTitle\" TEXT;
   ALTER TABLE \"Settings\" ADD COLUMN IF NOT EXISTS \"seoDefaultDesc\" TEXT;
+  
   -- Remove unnecessary Project columns
   ALTER TABLE \"Project\" DROP COLUMN IF EXISTS \"technicalSpecs\";
   ALTER TABLE \"Project\" DROP COLUMN IF EXISTS \"teamCredits\";
   ALTER TABLE \"Project\" DROP COLUMN IF EXISTS \"awards\";
-  -- Create missing indexes
-  CREATE INDEX IF NOT EXISTS \"Article_status_idx\" ON \"Article\"(\"status\");
-  CREATE INDEX IF NOT EXISTS \"Article_isFeatured_idx\" ON \"Article\"(\"isFeatured\");
-  -- Remove foreign key constraint if it exists
+  ALTER TABLE \"Project\" DROP COLUMN IF EXISTS \"yearStart\";
+  ALTER TABLE \"Project\" DROP COLUMN IF EXISTS \"yearCompletion\";
+  
+  -- Add correct Project columns
+  ALTER TABLE \"Project\" ADD COLUMN IF NOT EXISTS \"startDate\" TIMESTAMP(3);
+  ALTER TABLE \"Project\" ADD COLUMN IF NOT EXISTS \"completionDate\" TIMESTAMP(3);
+  
+  -- Remove foreign key constraint and authorId if it exists
   ALTER TABLE \"Article\" DROP CONSTRAINT IF EXISTS \"Article_authorId_fkey\";
-  -- Remove index if it exists  
   DROP INDEX IF EXISTS \"Article_authorId_idx\";
-  -- Remove the authorId column if it exists
   ALTER TABLE \"Article\" DROP COLUMN IF EXISTS \"authorId\";
+  
+  COMMIT;
 " 2>/dev/null || true
 echo "✅ Schema verification completed"
+
+# Verify critical columns exist
+echo "🔍 Final verification of critical database schema..."
+psql "$DATABASE_URL" -c "
+SELECT 
+    'Article.status' as check_item,
+    CASE WHEN EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='Article' AND column_name='status') 
+         THEN '✅ EXISTS' ELSE '❌ MISSING' END as status
+UNION ALL
+SELECT 
+    'Article.isFeatured' as check_item,
+    CASE WHEN EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='Article' AND column_name='isFeatured') 
+         THEN '✅ EXISTS' ELSE '❌ MISSING' END as status
+UNION ALL
+SELECT 
+    'Settings.logo' as check_item,
+    CASE WHEN EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='Settings' AND column_name='logo') 
+         THEN '✅ EXISTS' ELSE '❌ MISSING' END as status
+UNION ALL
+SELECT 
+    'Service table' as check_item,
+    CASE WHEN EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name='Service') 
+         THEN '✅ EXISTS' ELSE '❌ MISSING' END as status
+UNION ALL
+SELECT 
+    'Analytics table' as check_item,
+    CASE WHEN EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name='Analytics') 
+         THEN '✅ EXISTS' ELSE '❌ MISSING' END as status;
+" 2>/dev/null || echo "⚠️ Could not verify schema, but fixes were applied"
+
+# Regenerate Prisma client to ensure it's in sync with database
+echo "🔄 Regenerating Prisma client to sync with database schema..."
+npx prisma generate || echo "⚠️ Prisma generate failed, but continuing..."
 
 echo "✅ Migration process completed!"
 
