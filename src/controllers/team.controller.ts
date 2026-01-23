@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
-import { optimizeImage, deleteImage } from '../utils/imageProcessor';
+import { deleteImage } from '../utils/imageProcessor';
+import * as path from 'path';
 
 const prisma = new PrismaClient();
 
@@ -68,16 +69,37 @@ export const createTeamMember = async (req: Request, res: Response): Promise<voi
       return;
     }
 
-    // Handle photo upload
+    // Handle photo upload with simpler processing
     let photoUrl: string | null = null;
     const file = req.file;
     
     if (file) {
       try {
-        const optimized = await optimizeImage(file.path);
-        photoUrl = optimized.original;
+        // Simple image processing - just resize and compress for team photos
+        const filename = path.basename(file.path, path.extname(file.path));
+        const uploadDir = process.env.NODE_ENV === 'production' 
+          ? (process.env.UPLOAD_DIR || '/app/uploads')
+          : path.join(__dirname, '../../uploads');
+        
+        const outputName = `${filename}_team.jpg`;
+        const outputPath = path.join(uploadDir, outputName);
+        
+        // Simple resize to 400x400 for team photos
+        await require('sharp')(file.path)
+          .resize(400, 400, { fit: 'cover', position: 'center' })
+          .jpeg({ quality: 85 })
+          .toFile(outputPath);
+        
+        // Remove original
+        await require('fs').promises.unlink(file.path);
+        
+        photoUrl = `/uploads/${outputName}`;
+        console.log('Team photo processed successfully:', photoUrl);
       } catch (error) {
-        console.error('Error optimizing photo:', error);
+        console.error('Error processing team photo:', error);
+        // Fallback: use original file
+        const filename = path.basename(file.path);
+        photoUrl = `/uploads/${filename}`;
       }
     }
 
@@ -136,13 +158,34 @@ export const updateTeamMember = async (req: Request, res: Response): Promise<voi
       }
     }
     
-    // Upload new photo
+    // Upload new photo with simpler processing
     if (req.file) {
       try {
-        const optimized = await optimizeImage(req.file.path);
-        photoUrl = optimized.original;
+        // Simple image processing for team photo update
+        const filename = path.basename(req.file.path, path.extname(req.file.path));
+        const uploadDir = process.env.NODE_ENV === 'production' 
+          ? (process.env.UPLOAD_DIR || '/app/uploads')
+          : path.join(__dirname, '../../uploads');
+        
+        const outputName = `${filename}_team.jpg`;
+        const outputPath = path.join(uploadDir, outputName);
+        
+        // Simple resize to 400x400 for team photos
+        await require('sharp')(req.file.path)
+          .resize(400, 400, { fit: 'cover', position: 'center' })
+          .jpeg({ quality: 85 })
+          .toFile(outputPath);
+        
+        // Remove original
+        await require('fs').promises.unlink(req.file.path);
+        
+        photoUrl = `/uploads/${outputName}`;
+        console.log('Team photo updated successfully:', photoUrl);
       } catch (error) {
-        console.error('Error optimizing photo:', error);
+        console.error('Error processing updated team photo:', error);
+        // Fallback: use original file
+        const filename = path.basename(req.file.path);
+        photoUrl = `/uploads/${filename}`;
       }
     }
 
