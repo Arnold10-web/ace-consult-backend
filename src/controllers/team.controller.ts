@@ -247,11 +247,17 @@ export const deleteTeamMember = async (req: Request, res: Response): Promise<voi
     });
   } catch (error) {
     console.error('Error deleting team member:', error);
-    console.error('Error details:', {
-      message: error.message,
-      stack: error.stack,
-      code: error.code
-    });
-    res.status(500).json({ message: 'Internal server error', error: error.message });
+    
+    let errorMessage = 'Internal server error';
+    if (error instanceof Error) {
+      console.error('Error details:', {
+        message: error.message,
+        stack: error.stack,
+        name: error.name
+      });
+      errorMessage = error.message;
+    }
+    
+    res.status(500).json({ message: errorMessage });
   }
 };
