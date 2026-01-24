@@ -217,30 +217,41 @@ export const updateTeamMember = async (req: Request, res: Response): Promise<voi
 export const deleteTeamMember = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
+    console.log('Attempting to delete team member with ID:', id);
 
     const teamMember = await prisma.teamMember.findUnique({ where: { id } });
     
     if (!teamMember) {
+      console.log('Team member not found:', id);
       res.status(404).json({ message: 'Team member not found' });
       return;
     }
+
+    console.log('Found team member:', teamMember.name);
 
     // Delete photo if exists
     if (teamMember.photo) {
       try {
         await deleteImage(teamMember.photo);
+        console.log('Photo deleted successfully');
       } catch (error) {
         console.error('Error deleting photo:', error);
       }
     }
 
     await prisma.teamMember.delete({ where: { id } });
+    console.log('Team member deleted successfully');
 
     res.json({
       message: 'Team member deleted successfully',
     });
   } catch (error) {
     console.error('Error deleting team member:', error);
-    res.status(500).json({ message: 'Internal server error' });
+    console.error('Error details:', {
+      message: error.message,
+      stack: error.stack,
+      code: error.code
+    });
+    res.status(500).json({ message: 'Internal server error', error: error.message });
   }
 };
